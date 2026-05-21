@@ -1,0 +1,3924 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.claude/settings.json
+.gitignore
+AGENTS.md
+app.json
+assets/expo.icon/Assets/expo-symbol 2.svg
+assets/expo.icon/Assets/grid.png
+assets/expo.icon/icon.json
+assets/images/android-icon-background.png
+assets/images/android-icon-foreground.png
+assets/images/android-icon-monochrome.png
+assets/images/favicon.png
+assets/images/icon.png
+assets/images/splash-icon.png
+assets/images/tabIcons/explore.png
+assets/images/tabIcons/explore@2x.png
+assets/images/tabIcons/explore@3x.png
+assets/images/tabIcons/home.png
+assets/images/tabIcons/home@2x.png
+assets/images/tabIcons/home@3x.png
+CLAUDE.md
+eas.json
+package.json
+README.md
+src/app/_layout.tsx
+src/app/(app)/_layout.tsx
+src/app/(app)/apps.tsx
+src/app/(app)/explore.tsx
+src/app/(app)/index.tsx
+src/app/(app)/perfil.tsx
+src/app/(app)/profile.tsx
+src/app/(app)/wallet.tsx
+src/app/(auth)/_layout.tsx
+src/app/(auth)/login.tsx
+src/app/index.tsx
+src/components/center-app-picker.tsx
+src/components/custom-tab-bar.tsx
+src/components/error-boundary.tsx
+src/components/external-link.tsx
+src/components/glass-card.tsx
+src/components/home-bottom-sheet.tsx
+src/components/pressable-with-haptics.tsx
+src/components/reel-item.tsx
+src/components/themed-text.tsx
+src/components/themed-view.tsx
+src/components/ui/collapsible.tsx
+src/components/ui/skeleton-box.tsx
+src/constants/env.ts
+src/constants/theme.ts
+src/global.css
+src/hooks/use-auth.ts
+src/hooks/use-color-scheme.ts
+src/hooks/use-color-scheme.web.ts
+src/hooks/use-glass.ts
+src/hooks/use-network-status.ts
+src/hooks/use-theme.ts
+src/services/api.ts
+src/services/keychain.ts
+src/services/storage.ts
+src/stores/auth.store.ts
+src/stores/ui.store.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/(app)/apps.tsx">
+import { useRouter } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
+import {
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ALL_CATEGORIES,
+  AVAILABLE_APPS,
+  AppCategory,
+  CenterApp,
+  useUiStore,
+} from '@/stores/ui.store';
+import { Glass, H_PAD, NAV_SAFE_PAD, Spacing } from '@/constants/theme';
+import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
+
+// ── App Tile ─────────────────────────────────────────────
+function AppTile({
+  app,
+  isSelected,
+  onPress,
+  index,
+}: {
+  app: CenterApp;
+  isSelected: boolean;
+  onPress: () => void;
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const anim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function handlePress() {
+    scale.value = withSpring(0.88, { damping: 8, stiffness: 300 }, () => {
+      scale.value = withSpring(1, { damping: 12 });
+    });
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(index * 35).duration(320).springify()}>
+      <TouchableOpacity
+        onPress={handlePress}
+        accessibilityLabel={`Seleccionar ${app.label}`}
+        activeOpacity={0.85}
+        style={styles.tile}>
+        <Animated.View style={anim}>
+          {/* Ícono */}
+          <LinearGradient
+            colors={isSelected ? [app.color, app.colorTo] : ['rgba(255,255,255,0.09)', 'rgba(255,255,255,0.05)']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={[styles.tileIcon, isSelected && styles.tileIconActive]}>
+            <Text style={[styles.tileIconTxt, isSelected && styles.tileIconTxtActive]}>
+              {app.icon}
+            </Text>
+            {isSelected && (
+              <View style={styles.checkBadge}>
+                <Text style={styles.checkTxt}>✓</Text>
+              </View>
+            )}
+          </LinearGradient>
+
+          {/* Label */}
+          <Text
+            style={[styles.tileLabel, isSelected && styles.tileLabelActive]}
+            numberOfLines={1}>
+            {app.label}
+          </Text>
+
+          {/* Descripción */}
+          <Text style={styles.tileDesc} numberOfLines={2}>
+            {app.description}
+          </Text>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// ── Screen ───────────────────────────────────────────────
+export default function AppsScreen() {
+  const router = useRouter();
+  const { centerApp, setCenterApp } = useUiStore();
+
+  const [query,    setQuery]    = useState('');
+  const [category, setCategory] = useState<AppCategory | 'Todos'>('Todos');
+  const inputRef = useRef<TextInput>(null);
+
+  const filtered = useMemo(() => {
+    let list = AVAILABLE_APPS;
+    if (category !== 'Todos') list = list.filter((a) => a.category === category);
+    if (query.trim()) {
+      const q = query.toLowerCase().trim();
+      list = list.filter(
+        (a) =>
+          a.label.toLowerCase().includes(q) ||
+          a.description.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [query, category]);
+
+  function handleSelect(app: CenterApp) {
+    const isSame = centerApp?.id === app.id;
+    setCenterApp(isSame ? null : app);
+    if (!isSame) {
+      // pequeño delay para que el usuario vea la animación antes de salir
+      setTimeout(() => router.back(), 320);
+    }
+  }
+
+  return (
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[Glass.bgFrom, Glass.bgMid, Glass.bgTo]}
+        start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Orb decorativo */}
+      <View style={styles.orb} />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
+
+        {/* ── Header ── */}
+        <Animated.View entering={FadeIn.duration(300)} style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityLabel="Volver">
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>Apps</Text>
+            <Text style={styles.headerSub}>Elegí tu acceso rápido</Text>
+          </View>
+          {centerApp && (
+            <TouchableOpacity
+              onPress={() => { setCenterApp(null); }}
+              style={styles.clearBtn}
+              accessibilityLabel="Quitar acceso rápido">
+              <Text style={styles.clearTxt}>Quitar</Text>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+
+        {/* ── App seleccionada actualmente ── */}
+        {centerApp && (
+          <Animated.View entering={FadeInDown.duration(280)} style={styles.currentBanner}>
+            <LinearGradient
+              colors={[centerApp.color, centerApp.colorTo]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.currentGrad}>
+              <Text style={styles.currentIcon}>{centerApp.icon}</Text>
+              <View style={styles.currentMeta}>
+                <Text style={styles.currentLabel}>Acceso rápido actual</Text>
+                <Text style={styles.currentName}>{centerApp.label}</Text>
+              </View>
+              <Text style={styles.currentArrow}>✓</Text>
+            </LinearGradient>
+          </Animated.View>
+        )}
+
+        {/* ── Buscador ── */}
+        <Animated.View entering={FadeInDown.delay(60).duration(300)} style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            ref={inputRef}
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar app o función…"
+            placeholderTextColor={Glass.textMuted}
+            returnKeyType="search"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')} style={styles.clearInput} accessibilityLabel="Limpiar búsqueda">
+              <Text style={styles.clearInputTxt}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+
+        {/* ── Filtros de categoría ── */}
+        <Animated.View entering={FadeInDown.delay(100).duration(300)}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersContent}
+            keyboardShouldPersistTaps="always"
+            style={styles.filtersScroll}>
+            {(['Todos', ...ALL_CATEGORIES] as const).map((cat) => {
+              const active = category === cat;
+              return (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => { setCategory(cat as any); Keyboard.dismiss(); }}
+                  accessibilityLabel={`Filtrar: ${cat}`}
+                  style={[styles.filterChip, active && styles.filterChipActive]}>
+                  <Text style={[styles.filterTxt, active && styles.filterTxtActive]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+
+        {/* ── Grid de apps ── */}
+        <ScrollView
+          style={styles.gridScroll}
+          contentContainerStyle={[styles.gridContent, { paddingBottom: NAV_SAFE_PAD }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag">
+
+          {filtered.length === 0 ? (
+            <Animated.View entering={FadeIn.duration(300)} style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>◌</Text>
+              <Text style={styles.emptyTitle}>Sin resultados</Text>
+              <Text style={styles.emptySub}>
+                No encontramos "{query}" en {category === 'Todos' ? 'ninguna categoría' : category}
+              </Text>
+            </Animated.View>
+          ) : (
+            <View style={styles.grid}>
+              {filtered.map((app, i) => (
+                <AppTile
+                  key={app.id}
+                  app={app}
+                  isSelected={centerApp?.id === app.id}
+                  onPress={() => handleSelect(app)}
+                  index={i}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const TILE_W = '30%';   // 3 columnas
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  safe: { flex: 1 },
+  orb: {
+    position: 'absolute', width: 320, height: 320, borderRadius: 160,
+    backgroundColor: 'rgba(124,58,237,0.12)', top: -80, right: -80,
+    pointerEvents: 'none',
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: H_PAD, paddingTop: 6, paddingBottom: 14, gap: 12,
+  },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  backIcon:    { fontSize: 18, color: Glass.textPrimary, lineHeight: 22 },
+  headerText:  { flex: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: Glass.textPrimary, letterSpacing: -0.3 },
+  headerSub:   { fontSize: 12, color: Glass.textSecondary, marginTop: 1 },
+  clearBtn: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: 'rgba(251,113,133,0.12)',
+    borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(251,113,133,0.22)',
+  },
+  clearTxt: { fontSize: 12, color: '#fb7185', fontWeight: '600' },
+
+  // Banner app actual
+  currentBanner: { marginHorizontal: H_PAD, marginBottom: 14, borderRadius: 16, overflow: 'hidden' },
+  currentGrad: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 12, gap: 12,
+  },
+  currentIcon:  { fontSize: 22, color: '#fff' },
+  currentMeta:  { flex: 1 },
+  currentLabel: { fontSize: 10, color: 'rgba(255,255,255,0.65)', letterSpacing: 0.5 },
+  currentName:  { fontSize: 15, fontWeight: '700', color: '#fff', marginTop: 1 },
+  currentArrow: { fontSize: 16, color: 'rgba(255,255,255,0.80)' },
+
+  // Buscador
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: H_PAD, marginBottom: 12,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 14, borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 12, height: 44, gap: 8,
+  },
+  searchIcon:  { fontSize: 18, color: Glass.textMuted, lineHeight: 22 },
+  searchInput: { flex: 1, fontSize: 15, color: Glass.textPrimary, height: '100%' },
+  clearInput:  { padding: 4 },
+  clearInputTxt: { fontSize: 13, color: Glass.textMuted },
+
+  // Filtros
+  filtersScroll:  { flexGrow: 0 },
+  filtersContent: { paddingHorizontal: H_PAD, gap: 8, paddingBottom: 14 },
+  filterChip: {
+    paddingHorizontal: 14, paddingVertical: 7,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 20, borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.10)',
+  },
+  filterChipActive: {
+    backgroundColor: 'rgba(124,58,237,0.30)',
+    borderColor: 'rgba(124,58,237,0.50)',
+  },
+  filterTxt:       { fontSize: 13, color: Glass.textSecondary, fontWeight: '500' },
+  filterTxtActive: { color: '#c4b5fd', fontWeight: '700' },
+
+  // Grid
+  gridScroll:  { flex: 1 },
+  gridContent: { paddingHorizontal: H_PAD, paddingTop: 4 },
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    gap: 10,
+  },
+
+  // Tile
+  tile: { width: TILE_W },
+  tileIcon: {
+    aspectRatio: 1, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.10)',
+    position: 'relative', overflow: 'visible',
+    marginBottom: 7,
+  },
+  tileIconActive: {
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.28)',
+  },
+  tileIconTxt:       { fontSize: 26, color: 'rgba(255,255,255,0.50)' },
+  tileIconTxtActive: { color: '#fff' },
+  checkBadge: {
+    position: 'absolute', top: -5, right: -5,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: '#34d399',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: Glass.bgFrom,
+  },
+  checkTxt:          { fontSize: 10, color: '#fff', fontWeight: '800', lineHeight: 12 },
+  tileLabel:         { fontSize: 12, fontWeight: '600', color: Glass.textSecondary, marginBottom: 3 },
+  tileLabelActive:   { color: Glass.textPrimary },
+  tileDesc:          { fontSize: 10, color: Glass.textMuted, lineHeight: 14 },
+
+  // Empty state
+  emptyState: { alignItems: 'center', paddingTop: 64, gap: 10 },
+  emptyIcon:  { fontSize: 48, color: Glass.textMuted },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: Glass.textSecondary },
+  emptySub:   { fontSize: 13, color: Glass.textMuted, textAlign: 'center', maxWidth: 240 },
+});
+</file>
+
+<file path="src/components/center-app-picker.tsx">
+import { useEffect } from 'react';
+import {
+  Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Glass, H_PAD, Spacing } from '@/constants/theme';
+import {
+  AVAILABLE_APPS,
+  CenterApp,
+  useUiStore,
+} from '@/stores/ui.store';
+
+const { height: SCREEN_H } = Dimensions.get('window');
+
+export function CenterAppPicker() {
+  const { pickerVisible, setPickerVisible, centerApp, setCenterApp } = useUiStore();
+
+  const translateY     = useSharedValue(SCREEN_H);
+  const overlayOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (pickerVisible) {
+      overlayOpacity.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.ease) });
+      translateY.value     = withSpring(0, { damping: 22, stiffness: 260 });
+    } else {
+      overlayOpacity.value = withTiming(0, { duration: 200 });
+      translateY.value     = withTiming(SCREEN_H, { duration: 260, easing: Easing.in(Easing.ease) });
+    }
+  }, [pickerVisible]);
+
+  const overlayStyle = useAnimatedStyle(() => ({ opacity: overlayOpacity.value }));
+  const sheetStyle   = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+
+  function handleSelect(app: CenterApp) {
+    setCenterApp(app);
+    setPickerVisible(false);
+  }
+
+  function handleRemove() {
+    setCenterApp(null);
+    setPickerVisible(false);
+  }
+
+  return (
+    <Modal
+      visible={pickerVisible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={() => setPickerVisible(false)}>
+
+      <TouchableWithoutFeedback onPress={() => setPickerVisible(false)}>
+        <Animated.View style={[StyleSheet.absoluteFillObject, styles.overlay, overlayStyle]} />
+      </TouchableWithoutFeedback>
+
+      <Animated.View style={[styles.sheet, sheetStyle]}>
+        {/* Handle */}
+        <View style={styles.handleWrap}>
+          <View style={styles.handle} />
+        </View>
+
+        <View style={styles.sheetHeader}>
+          <View>
+            <Text style={styles.sheetTitle}>Acceso rápido</Text>
+            <Text style={styles.sheetSub}>
+              {centerApp
+                ? `Actual: ${centerApp.label} — toca para cambiar`
+                : 'Elegí un módulo para el botón central'}
+            </Text>
+          </View>
+          {centerApp && (
+            <TouchableOpacity
+              onPress={handleRemove}
+              style={styles.removeBtn}
+              accessibilityLabel="Quitar acceso rápido">
+              <Text style={styles.removeTxt}>Quitar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.gridContent}>
+          <View style={styles.grid}>
+            {AVAILABLE_APPS.map((app) => {
+              const isSelected = centerApp?.id === app.id;
+              return (
+                <AppTile
+                  key={app.id}
+                  app={app}
+                  isSelected={isSelected}
+                  onPress={() => handleSelect(app)}
+                />
+              );
+            })}
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerHint}>
+            💡 Mantén presionado el botón central para volver a esta pantalla
+          </Text>
+        </View>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+// ── Tile individual ──────────────────────────────────────
+function AppTile({
+  app,
+  isSelected,
+  onPress,
+}: {
+  app: CenterApp;
+  isSelected: boolean;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const anim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function handlePress() {
+    scale.value = withSpring(0.88, { duration: 80 }, () => {
+      scale.value = withSpring(1, { duration: 200 });
+    });
+    onPress();
+  }
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      accessibilityLabel={`Seleccionar ${app.label}`}
+      activeOpacity={0.8}
+      style={styles.tile}>
+      <Animated.View style={anim}>
+        <LinearGradient
+          colors={isSelected ? [app.color, app.colorTo] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.05)']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={[styles.tileIcon, isSelected && styles.tileIconSelected]}>
+          <Text style={[styles.tileIconTxt, isSelected && { color: '#fff' }]}>{app.icon}</Text>
+        </LinearGradient>
+        <Text style={[styles.tileLabel, isSelected && styles.tileLabelSelected]}>
+          {app.label}
+        </Text>
+        {isSelected && <View style={styles.selectedDot} />}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: { backgroundColor: Glass.overlayBg },
+
+  sheet: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    maxHeight: SCREEN_H * 0.70,
+    backgroundColor: Glass.sheetBg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 0.5,
+    borderColor: Glass.cardBorder,
+    borderBottomWidth: 0,
+    overflow: 'hidden',
+  },
+
+  handleWrap: { width: '100%', alignItems: 'center', paddingTop: 12, paddingBottom: 4 },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)' },
+
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: H_PAD,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+  },
+  sheetTitle: { fontSize: 18, fontWeight: '700', color: Glass.textPrimary },
+  sheetSub:   { fontSize: 12, color: Glass.textSecondary, marginTop: 3, maxWidth: 220 },
+  removeBtn: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: 'rgba(251,113,133,0.12)',
+    borderRadius: 10, borderWidth: 0.5,
+    borderColor: 'rgba(251,113,133,0.25)',
+  },
+  removeTxt: { fontSize: 12, color: '#fb7185', fontWeight: '600' },
+
+  gridContent: { paddingHorizontal: H_PAD, paddingTop: 16, paddingBottom: 8 },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+  },
+
+  tile: {
+    width: '22%',          // 4 columnas
+    alignItems: 'center',
+    gap: 7,
+  },
+  tileIcon: {
+    width: 58, height: 58,
+    borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  tileIconSelected: {
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.30)',
+  },
+  tileIconTxt:      { fontSize: 22, color: 'rgba(255,255,255,0.55)' },
+  tileLabel:        { fontSize: 11, color: Glass.textSecondary, textAlign: 'center' },
+  tileLabelSelected:{ color: Glass.textPrimary, fontWeight: '600' },
+  selectedDot: {
+    width: 5, height: 5, borderRadius: 2.5,
+    backgroundColor: '#c4b5fd',
+    alignSelf: 'center', marginTop: -4,
+  },
+
+  footer: {
+    paddingHorizontal: H_PAD, paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.07)',
+  },
+  footerHint: { fontSize: 12, color: Glass.textMuted, textAlign: 'center' },
+});
+</file>
+
+<file path="src/components/reel-item.tsx">
+import * as Haptics from 'expo-haptics';
+import { useCallback, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Glass } from '@/constants/theme';
+
+const { width: W, height: H } = Dimensions.get('window');
+
+export type ReelData = {
+  id: string;
+  username: string;
+  handle: string;
+  caption: string;
+  song: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  bgColors: [string, string];
+  avatarEmoji: string;
+  following: boolean;
+  videoUri?: string;
+};
+
+type Props = { item: ReelData; isActive: boolean };
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+// Componente de video lazy: solo renderiza cuando es el reel activo
+function ReelVideo({ uri, isActive }: { uri: string; isActive: boolean }) {
+  if (Platform.OS === 'web') {
+    // En web usamos <video> nativo directamente — no hay expo-video en web
+    return (
+      <video
+        src={uri}
+        autoPlay={isActive}
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'absolute', top: 0, left: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+        } as any}
+      />
+    );
+  }
+
+  // En nativo: expo-video (instalar: npx expo install expo-video)
+  // Descomenta cuando lo instales:
+  // const player = useVideoPlayer(uri, (p) => { p.loop = true; if (isActive) p.play(); else p.pause(); });
+  // return <VideoView player={player} style={StyleSheet.absoluteFillObject} contentFit="cover" nativeControls={false} />;
+
+  // Fallback placeholder hasta tener expo-video instalado
+  return null;
+}
+
+export function ReelItem({ item, isActive }: Props) {
+  const [liked,     setLiked]     = useState(false);
+  const [likeCount, setLikeCount] = useState(item.likes);
+  const [following, setFollowing] = useState(item.following);
+  const [muted,     setMuted]     = useState(false);
+
+  const heartScale   = useSharedValue(0);
+  const heartOpacity = useSharedValue(0);
+  const heartAnim    = useAnimatedStyle(() => ({
+    transform: [{ scale: heartScale.value }],
+    opacity:   heartOpacity.value,
+  }));
+
+  const likeScale = useSharedValue(1);
+  const likeAnim  = useAnimatedStyle(() => ({ transform: [{ scale: likeScale.value }] }));
+
+  const lastTap = useRef(0);
+
+  function triggerHeartBurst() {
+    heartScale.value   = 0;
+    heartOpacity.value = 1;
+    heartScale.value   = withSpring(1.25, { damping: 8, stiffness: 180 }, () => {
+      heartScale.value   = withTiming(0,   { duration: 280 });
+      heartOpacity.value = withTiming(0,   { duration: 280 });
+    });
+  }
+
+  const handleDoubleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      if (!liked) {
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+        likeScale.value = withSequence(
+          withSpring(1.4, { damping: 6 }),
+          withSpring(1,   { damping: 10 }),
+        );
+      }
+      triggerHeartBurst();
+    }
+    lastTap.current = now;
+  }, [liked]);
+
+  function handleLikeBtn() {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setLiked((v) => !v);
+    setLikeCount((c) => liked ? c - 1 : c + 1);
+    likeScale.value = withSequence(
+      withSpring(1.35, { damping: 6, stiffness: 300 }),
+      withSpring(1,    { damping: 10 }),
+    );
+  }
+
+  function handleFollow() {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setFollowing((v) => !v);
+  }
+
+  return (
+    <View style={[styles.container, { width: W, height: H }]}>
+      {/* Fondo: gradiente siempre presente, video encima si hay uri */}
+      <LinearGradient
+        colors={item.bgColors}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Círculos decorativos (visibles cuando no hay video) */}
+      {!item.videoUri && (
+        <>
+          <View style={styles.patternCircle1} />
+          <View style={styles.patternCircle2} />
+        </>
+      )}
+
+      {/* Video real */}
+      {item.videoUri && (
+        <ReelVideo uri={item.videoUri} isActive={isActive} />
+      )}
+
+      {/* Tap area para doble tap */}
+      <TouchableWithoutFeedback onPress={handleDoubleTap}>
+        <View style={StyleSheet.absoluteFillObject} />
+      </TouchableWithoutFeedback>
+
+      {/* Heart burst */}
+      <Animated.Text style={[styles.heartBurst, heartAnim]}>❤️</Animated.Text>
+
+      {/* Mute */}
+      <TouchableOpacity
+        onPress={() => setMuted((v) => !v)}
+        style={styles.muteBtn}
+        accessibilityLabel={muted ? 'Activar sonido' : 'Silenciar'}>
+        <Text style={styles.muteIcon}>{muted ? '🔇' : '🔊'}</Text>
+      </TouchableOpacity>
+
+      {/* Gradiente inferior */}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.88)']}
+        style={styles.bottomGradient}
+        pointerEvents="none"
+      />
+
+      {/* Progress bar */}
+      {isActive && (
+        <View style={styles.progressBar}>
+          <View style={styles.progressFill} />
+        </View>
+      )}
+
+      {/* Side actions */}
+      <View style={styles.sideActions}>
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarRing}>
+            <Text style={styles.avatarEmoji}>{item.avatarEmoji}</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleFollow}
+            style={[styles.followBtn, following && styles.followBtnActive]}
+            accessibilityLabel={following ? 'Dejar de seguir' : 'Seguir'}>
+            <Text style={[styles.followIcon, following && { color: '#7c3aed' }]}>
+              {following ? '✓' : '+'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={handleLikeBtn} style={styles.actionBtn} accessibilityLabel="Me gusta">
+          <Animated.Text style={[styles.actionIcon, likeAnim, { color: liked ? '#fb7185' : '#fff' }]}>
+            {liked ? '❤️' : '🤍'}
+          </Animated.Text>
+          <Text style={styles.actionLabel}>{formatCount(likeCount)}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionBtn} accessibilityLabel="Comentarios">
+          <Text style={styles.actionIcon}>💬</Text>
+          <Text style={styles.actionLabel}>{formatCount(item.comments)}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionBtn} accessibilityLabel="Compartir">
+          <Text style={styles.actionIcon}>➤</Text>
+          <Text style={styles.actionLabel}>{formatCount(item.shares)}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionBtn} accessibilityLabel="Más opciones">
+          <Text style={[styles.actionIcon, { fontSize: 20, letterSpacing: 2 }]}>•••</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Bottom info */}
+      <View style={styles.bottomInfo}>
+        <Text style={styles.username}>{item.username}</Text>
+        <Text style={styles.caption} numberOfLines={2}>{item.caption}</Text>
+        <View style={styles.songRow}>
+          <Text style={styles.songIcon}>♫</Text>
+          <Text style={styles.songName} numberOfLines={1}>{item.song}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { position: 'relative', overflow: 'hidden', backgroundColor: '#000' },
+
+  patternCircle1: {
+    position: 'absolute', width: 340, height: 340, borderRadius: 170,
+    backgroundColor: 'rgba(255,255,255,0.04)', top: -60, right: -80,
+  },
+  patternCircle2: {
+    position: 'absolute', width: 240, height: 240, borderRadius: 120,
+    backgroundColor: 'rgba(255,255,255,0.04)', bottom: 200, left: -60,
+  },
+
+  heartBurst: {
+    position: 'absolute', alignSelf: 'center', top: '38%',
+    fontSize: 90, zIndex: 20,
+  },
+
+  muteBtn: {
+    position: 'absolute', top: 52, right: 16,
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.40)',
+    alignItems: 'center', justifyContent: 'center', zIndex: 10,
+  },
+  muteIcon: { fontSize: 16 },
+
+  bottomGradient: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: 340,
+  },
+
+  progressBar: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+    backgroundColor: 'rgba(255,255,255,0.20)', zIndex: 20,
+  },
+  progressFill: {
+    width: '60%', height: '100%',
+    backgroundColor: '#fff', borderRadius: 1,
+  },
+
+  sideActions: {
+    position: 'absolute', right: 12, bottom: 120,
+    alignItems: 'center', gap: 20, zIndex: 10,
+  },
+  avatarWrap: { alignItems: 'center' },
+  avatarRing: {
+    width: 48, height: 48, borderRadius: 24,
+    borderWidth: 2, borderColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarEmoji: { fontSize: 26 },
+  followBtn: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: '#fb7185',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: -10, borderWidth: 1.5, borderColor: '#000',
+  },
+  followBtnActive: { backgroundColor: '#fff' },
+  followIcon: { fontSize: 11, color: '#fff', fontWeight: '800', lineHeight: 14 },
+
+  actionBtn:   { alignItems: 'center', gap: 4 },
+  actionIcon:  { fontSize: 28, lineHeight: 32, color: '#fff' },
+  actionLabel: {
+    fontSize: 12, color: '#fff', fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+
+  bottomInfo: {
+    position: 'absolute', bottom: 110, left: 14, right: 76,
+    gap: 6, zIndex: 10,
+  },
+  username: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  caption:  { fontSize: 13, color: 'rgba(255,255,255,0.88)', lineHeight: 18 },
+  songRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  songIcon: { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
+  songName: { fontSize: 12, color: 'rgba(255,255,255,0.75)', flex: 1 },
+});
+</file>
+
+<file path="src/hooks/use-glass.ts">
+import { useColorScheme } from 'react-native';
+import { GlassDark, GlassLight, GlassTokens } from '@/constants/theme';
+import { useUiStore } from '@/stores/ui.store';
+
+export function useGlass(): GlassTokens {
+  const { themeMode } = useUiStore();
+  const system = useColorScheme();
+
+  if (themeMode === 'light') return GlassLight;
+  if (themeMode === 'dark')  return GlassDark;
+  // 'system'
+  return system === 'light' ? GlassLight : GlassDark;
+}
+
+export function useIsDark(): boolean {
+  const { themeMode } = useUiStore();
+  const system = useColorScheme();
+  if (themeMode === 'light') return false;
+  if (themeMode === 'dark')  return true;
+  return system !== 'light';
+}
+</file>
+
+<file path=".claude/settings.json">
+{
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true
+  }
+}
+</file>
+
+<file path=".gitignore">
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# generated native folders
+/ios
+/android
+</file>
+
+<file path="AGENTS.md">
+# Expo HAS CHANGED
+
+Read the exact versioned docs at https://docs.expo.dev/versions/v55.0.0/ before writing any code.
+</file>
+
+<file path="assets/expo.icon/Assets/expo-symbol 2.svg">
+<svg width="652" height="606" viewBox="0 0 652 606" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M353.554 0H298.446C273.006 0 249.684 14.6347 237.962 37.9539L4.37994 502.646C-1.04325 513.435 -1.45067 526.178 3.2716 537.313L22.6123 582.918C34.6475 611.297 72.5404 614.156 88.4414 587.885L309.863 222.063C313.34 216.317 319.439 212.826 326 212.826C332.561 212.826 338.659 216.317 342.137 222.063L563.559 587.885C579.46 614.156 617.352 611.297 629.388 582.918L648.728 537.313C653.451 526.178 653.043 513.435 647.62 502.646L414.038 37.9539C402.316 14.6347 378.994 0 353.554 0Z" fill="white"/>
+</svg>
+</file>
+
+<file path="assets/expo.icon/icon.json">
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.47843,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "expo-symbol 2.svg",
+          "name" : "expo-symbol 2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              1.1008400065293245e-05,
+              -16.046875
+            ]
+          }
+        },
+        {
+          "image-name" : "grid.png",
+          "name" : "grid"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
+</file>
+
+<file path="CLAUDE.md">
+@AGENTS.md
+</file>
+
+<file path="eas.json">
+{
+  "cli": {
+    "version": ">= 16.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "staging"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production"
+      }
+    }
+  },
+  "update": {
+    "production": {
+      "channel": "production"
+    },
+    "staging": {
+      "channel": "staging"
+    }
+  }
+}
+</file>
+
+<file path="README.md">
+# Welcome to your Expo app 👋
+
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+
+## Get started
+
+1. Install dependencies
+
+   ```bash
+   npm install
+   ```
+
+2. Start the app
+
+   ```bash
+   npx expo start
+   ```
+
+In the output, you'll find options to open the app in a
+
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Get a fresh project
+
+When you're ready, run:
+
+```bash
+npm run reset-project
+```
+
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+### Other setup steps
+
+- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
+- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
+- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+
+## Learn more
+
+To learn more about developing your project with Expo, look at the following resources:
+
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+</file>
+
+<file path="src/app/(app)/_layout.tsx">
+import { Slot } from 'expo-router';
+import { Platform, StyleSheet, View } from 'react-native';
+import { CustomTabBar } from '@/components/custom-tab-bar';
+
+export default function AppLayout() {
+  return (
+    <View style={styles.root}>
+      <Slot />
+      <CustomTabBar />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    ...(Platform.OS === 'web' && {
+      minHeight: '100dvh' as any,
+      width: '100%',
+    }),
+  },
+});
+</file>
+
+<file path="src/app/(app)/explore.tsx">
+import { useCallback, useRef, useState } from 'react';
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewToken,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ReelItem, ReelData } from '@/components/reel-item';
+import { NAV_SAFE_PAD } from '@/constants/theme';
+
+const { height: H } = Dimensions.get('window');
+
+const REELS: ReelData[] = [
+  {
+    id: '1',
+    username: '@sofia.dev',
+    handle: 'Sofía Morales',
+    caption: 'Nuevo feature en producción 🚀 así se ve el deploy sin romper nada por primera vez',
+    song: 'Lo-fi Coding Beats — Chill Mix',
+    likes: 14200,
+    comments: 843,
+    shares: 521,
+    bgColors: ['#0f0c29', '#302b63'],
+    avatarEmoji: '👩‍💻',
+    following: false,
+    videoUri: 'https://www.w3schools.com/html/mov_bbb.mp4',
+  },
+  {
+    id: '2',
+    username: '@fintech.tips',
+    handle: 'Fintech Tips',
+    caption: '3 formas de optimizar tu flujo de caja en menos de 5 minutos 💰',
+    song: 'Future Bass — LoFi Records',
+    likes: 8900,
+    comments: 312,
+    shares: 890,
+    bgColors: ['#0d2545', '#1a4a7a'],
+    avatarEmoji: '📊',
+    following: true,
+    videoUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  },
+  {
+    id: '3',
+    username: '@crypto.ar',
+    handle: 'Crypto Argentina',
+    caption: 'Bitcoin rompió resistencia histórica ¿qué viene ahora? Te explico en 60 segundos ⚡',
+    song: 'Electronic Vibes — DJ Nova',
+    likes: 31000,
+    comments: 2100,
+    shares: 4200,
+    bgColors: ['#1a0533', '#4a0e8f'],
+    avatarEmoji: '₿',
+    following: false,
+    videoUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  },
+  {
+    id: '4',
+    username: '@inversiones.ok',
+    handle: 'Inversiones OK',
+    caption: 'El error que comete el 90% al invertir sus primeros pesos 📉 → 📈',
+    song: 'Motivational Trap — BeatsForge',
+    likes: 22400,
+    comments: 1560,
+    shares: 3100,
+    bgColors: ['#0a1628', '#163356'],
+    avatarEmoji: '💡',
+    following: false,
+    videoUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+  },
+  {
+    id: '5',
+    username: '@martin.ux',
+    handle: 'Martín UX',
+    caption: 'Diseñé esta app en 48 horas usando solo Figma y café ☕ — proceso completo',
+    song: 'Indie Pop Mix — Sunwave',
+    likes: 9800,
+    comments: 445,
+    shares: 720,
+    bgColors: ['#0d1f0d', '#1a4a1a'],
+    avatarEmoji: '🎨',
+    following: true,
+    videoUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+  },
+];
+
+export default function ReelsScreen() {
+  const insets = useSafeAreaInsets();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeTab,   setActiveTab]   = useState<'para-ti' | 'siguiendo'>('para-ti');
+
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        setActiveIndex(viewableItems[0].index);
+      }
+    },
+    [],
+  );
+
+  // FIX: react-native-web requiere viewAreaCoveragePercentThreshold (0–1)
+  // NO usar itemVisibilityPercentThreshold — falla en web
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 60,
+  });
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: ReelData; index: number }) => (
+      <ReelItem item={item} isActive={index === activeIndex} />
+    ),
+    [activeIndex],
+  );
+
+  return (
+    <View style={styles.root}>
+      {/* Top tabs — Para ti / Siguiendo */}
+      <View style={[styles.topTabs, { paddingTop: insets.top + 8 }]}>
+        {(['para-ti', 'siguiendo'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            accessibilityLabel={tab === 'para-ti' ? 'Para ti' : 'Siguiendo'}
+            style={styles.topTabBtn}>
+            <Text style={[styles.topTabTxt, activeTab === tab && styles.topTabTxtActive]}>
+              {tab === 'para-ti' ? 'Para ti' : 'Siguiendo'}
+            </Text>
+            {activeTab === tab && <View style={styles.topTabLine} />}
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Label REELS top left */}
+      <View style={[styles.reelsLabel, { top: insets.top + 10 }]}>
+        <Text style={styles.reelsLabelTxt}>Reels</Text>
+      </View>
+
+      <FlatList
+        data={REELS}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        pagingEnabled
+        snapToInterval={H}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig.current}
+        getItemLayout={(_, index) => ({ length: H, offset: H * index, index })}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: NAV_SAFE_PAD }}
+        removeClippedSubviews
+        maxToRenderPerBatch={3}
+        windowSize={5}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  topTabs: {
+    position: 'absolute', top: 0, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'center',
+    gap: 32, zIndex: 20, paddingBottom: 8,
+  },
+  topTabBtn:       { alignItems: 'center', paddingHorizontal: 4 },
+  topTabTxt:       { fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.45)' },
+  topTabTxtActive: { color: '#fff', fontWeight: '700' },
+  topTabLine:      { width: 20, height: 2, backgroundColor: '#fff', borderRadius: 1, marginTop: 4 },
+  reelsLabel:      { position: 'absolute', left: 16, zIndex: 20 },
+  reelsLabelTxt:   { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+});
+</file>
+
+<file path="src/app/(app)/index.tsx">
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { GlassCard } from '@/components/glass-card';
+import { HomeBottomSheet } from '@/components/home-bottom-sheet';
+import { Brand, CARD_GAP, H_PAD, NAV_SAFE_PAD, SCREEN_WIDTH, Spacing } from '@/constants/theme';
+import { useGlass } from '@/hooks/use-glass';
+
+const COL_WIDE = (SCREEN_WIDTH - H_PAD * 2 - CARD_GAP) * 0.58;
+const COL_NARR = (SCREEN_WIDTH - H_PAD * 2 - CARD_GAP) * 0.42;
+
+const MOVIMIENTOS = [
+  { id: '1', title: 'Transferencia recibida', desc: 'Juan Pérez',   amount: '+$1.200', icon: '↑' },
+  { id: '2', title: 'Pago de servicio',       desc: 'Edenor',       amount: '-$340',   icon: '↓' },
+  { id: '3', title: 'Transferencia enviada',  desc: 'María García', amount: '-$500',   icon: '↓' },
+  { id: '4', title: 'Cobro de factura',       desc: 'Cliente A',    amount: '+$3.000', icon: '↑' },
+];
+
+const BARS    = [0.28, 0.52, 0.38, 0.85, 0.62, 0.44, 0.68];
+const DAYS    = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const TODAY_I = 3;
+
+type Mov = typeof MOVIMIENTOS[0];
+
+export default function HomeScreen() {
+  const G = useGlass();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedItem, setSelected] = useState<Mov | null>(null);
+
+  function openSheet(item: Mov | null) { setSelected(item); setSheetOpen(true); }
+
+  return (
+    <View style={styles.root}>
+      <LinearGradient colors={[G.bgFrom, G.bgMid, G.bgTo]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      <View style={[styles.orb1, { backgroundColor: G.orb1 }]} />
+      <View style={[styles.orb2, { backgroundColor: G.orb2 }]} />
+      <View style={[styles.orb3, { backgroundColor: G.orb3 }]} />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.greeting, { color: G.textSecondary }]}>Buenos días</Text>
+            <Text style={[styles.title, { color: G.textPrimary }]}>Tu cuenta</Text>
+          </View>
+          <TouchableOpacity onPress={() => openSheet(null)} accessibilityLabel="Menú" style={[styles.avatar, { backgroundColor: G.accentSoft, borderColor: G.accent }]}>
+            <Text style={[styles.avatarText, { color: G.accent }]}>JS</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
+
+          {/* ROW 1 */}
+          <View style={styles.row}>
+            <GlassCard style={[styles.cardBal, { width: COL_WIDE }]}>
+              <Text style={[styles.lbl, { color: G.textMuted }]}>BALANCE</Text>
+              <Text style={[styles.balAmount, { color: G.textPrimary }]}>$8.170</Text>
+              <View style={[styles.balBadge, { backgroundColor: G.positive + '22' }]}>
+                <Text style={[styles.balBadgeTxt, { color: G.positive }]}>↑ 12% este mes</Text>
+              </View>
+            </GlassCard>
+            <View style={[styles.colStack, { width: COL_NARR }]}>
+              <GlassCard style={styles.cardMini}>
+                <Text style={[styles.lbl, { color: G.textMuted }]}>INGRESOS</Text>
+                <Text style={[styles.metricVal, { color: G.textPrimary }]}>$12.4k</Text>
+                <Text style={[styles.trend, { color: G.positive }]}>+8%</Text>
+              </GlassCard>
+              <GlassCard style={styles.cardMini}>
+                <Text style={[styles.lbl, { color: G.textMuted }]}>GASTOS</Text>
+                <Text style={[styles.metricVal, { color: G.textPrimary }]}>$4.2k</Text>
+                <Text style={[styles.trend, { color: G.negative }]}>-3%</Text>
+              </GlassCard>
+            </View>
+          </View>
+
+          {/* ROW 2 — Gráfico */}
+          <GlassCard style={styles.cardWide}>
+            <View style={styles.chartHeader}>
+              <Text style={[styles.lbl, { color: G.textMuted }]}>ACTIVIDAD — MAYO</Text>
+              <Text style={[styles.chartSub, { color: G.textMuted }]}>Semana actual</Text>
+            </View>
+            <View style={styles.barsWrap}>
+              {BARS.map((h, i) => (
+                <View key={i} style={styles.barCol}>
+                  {i === TODAY_I && <Text style={[styles.barTooltip, { color: G.accent }]}>$3k</Text>}
+                  <View style={[styles.bar, { height: `${h * 100}%` as any, backgroundColor: i === TODAY_I ? G.barActive : G.barInactive }]} />
+                </View>
+              ))}
+            </View>
+            <View style={styles.barsLabels}>
+              {DAYS.map((d, i) => (
+                <Text key={d} style={[styles.barLbl, { color: i === TODAY_I ? G.textPrimary : G.textMuted }, i === TODAY_I && { fontWeight: '600' }]}>{d}</Text>
+              ))}
+            </View>
+          </GlassCard>
+
+          {/* ROW 3 — Movimientos */}
+          <GlassCard style={styles.cardWide}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: G.textPrimary }]}>Últimos movimientos</Text>
+              <TouchableOpacity onPress={() => openSheet(null)} accessibilityLabel="Ver todos">
+                <Text style={[styles.verTodos, { color: G.accent }]}>Ver todos →</Text>
+              </TouchableOpacity>
+            </View>
+            {MOVIMIENTOS.map((item, idx) => (
+              <TouchableOpacity key={item.id} onPress={() => openSheet(item)} activeOpacity={0.7}
+                style={[styles.txRow, idx < MOVIMIENTOS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: G.cardBorder }]}>
+                <View style={[styles.txIcon, { backgroundColor: item.amount.startsWith('+') ? G.positive + '20' : G.negative + '20' }]}>
+                  <Text style={[styles.txIconTxt, { color: item.amount.startsWith('+') ? G.positive : G.negative }]}>{item.icon}</Text>
+                </View>
+                <View style={styles.txMeta}>
+                  <Text style={[styles.txTitle, { color: G.textPrimary }]}>{item.title}</Text>
+                  <Text style={[styles.txDesc,  { color: G.textMuted }]}>{item.desc}</Text>
+                </View>
+                <Text style={[styles.txAmount, { color: item.amount.startsWith('+') ? G.positive : G.negative }]}>{item.amount}</Text>
+              </TouchableOpacity>
+            ))}
+          </GlassCard>
+
+          {/* CTA */}
+          <TouchableOpacity onPress={() => openSheet(null)} activeOpacity={0.8} accessibilityLabel="Nueva operación">
+            <LinearGradient colors={[G.centerBtnFrom, G.centerBtnTo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+              <Text style={styles.ctaText}>+ Nueva operación</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+
+      <HomeBottomSheet isOpen={sheetOpen} onClose={() => setSheetOpen(false)} item={selectedItem} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, overflow: 'hidden' },
+  safe: { flex: 1 },
+  orb1: { position: 'absolute', width: 280, height: 280, borderRadius: 140, top: -100, right: -80, pointerEvents: 'none' },
+  orb2: { position: 'absolute', width: 220, height: 220, borderRadius: 110, bottom: 120, left: -80, pointerEvents: 'none' },
+  orb3: { position: 'absolute', width: 150, height: 150, borderRadius: 75, top: '45%', right: -30, pointerEvents: 'none' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: H_PAD, paddingTop: Spacing.one, paddingBottom: Spacing.two },
+  greeting: { fontSize: 12, letterSpacing: 0.2 },
+  title:    { fontSize: 24, fontWeight: '700', marginTop: 1 },
+  avatar:   { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 13, fontWeight: '700' },
+  scroll:        { flex: 1 },
+  scrollContent: { paddingHorizontal: H_PAD, paddingTop: Spacing.two, paddingBottom: NAV_SAFE_PAD, gap: CARD_GAP },
+  row:      { flexDirection: 'row', gap: CARD_GAP },
+  colStack: { gap: CARD_GAP },
+  cardBal:  { padding: Spacing.three, height: 138, justifyContent: 'flex-end' },
+  balAmount: { fontSize: 30, fontWeight: '800', letterSpacing: -1, lineHeight: 34, marginVertical: 4 },
+  balBadge:  { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  balBadgeTxt: { fontSize: 10, fontWeight: '600' },
+  cardMini:  { flex: 1, padding: 12, height: 64, justifyContent: 'center' },
+  metricVal: { fontSize: 17, fontWeight: '700', marginVertical: 2 },
+  trend:     { fontSize: 11, fontWeight: '500' },
+  lbl:       { fontSize: 9, letterSpacing: 0.9, marginBottom: 2 },
+  cardWide:  { padding: Spacing.three },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.two },
+  chartSub:  { fontSize: 10 },
+  barsWrap:  { flexDirection: 'row', alignItems: 'flex-end', height: 58, gap: 4, marginBottom: 6 },
+  barCol:    { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center' },
+  bar:       { borderRadius: 4, width: '100%' },
+  barTooltip:{ fontSize: 9, marginBottom: 3, fontWeight: '600' },
+  barsLabels:{ flexDirection: 'row', justifyContent: 'space-between' },
+  barLbl:    { flex: 1, fontSize: 9, textAlign: 'center' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.two },
+  sectionTitle:  { fontSize: 13, fontWeight: '600' },
+  verTodos:      { fontSize: 11 },
+  txRow:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  txIcon:   { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  txIconTxt:{ fontSize: 14, fontWeight: '600' },
+  txMeta:   { flex: 1 },
+  txTitle:  { fontSize: 13, fontWeight: '500', marginBottom: 2 },
+  txDesc:   { fontSize: 11 },
+  txAmount: { fontSize: 13, fontWeight: '700', letterSpacing: -0.2 },
+  cta:      { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  ctaText:  { fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: 0.2 },
+});
+</file>
+
+<file path="src/app/(app)/perfil.tsx">
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Spacing } from '@/constants/theme';
+
+export default function PerfilScreen() {
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ThemedText type="title">Perfil</ThemedText>
+        <ThemedText themeColor="textSecondary">
+          Pantalla de perfil de usuario
+        </ThemedText>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
+});
+</file>
+
+<file path="src/app/(app)/profile.tsx">
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Brand, H_PAD, NAV_SAFE_PAD, Spacing } from '@/constants/theme';
+import { useGlass, useIsDark } from '@/hooks/use-glass';
+import { useAuth } from '@/hooks/use-auth';
+import { useUiStore } from '@/stores/ui.store';
+
+type MenuRow  = { id: string; icon: string; label: string; sublabel?: string; value?: string; destructive?: boolean; onPress?: () => void; toggle?: boolean; toggleValue?: boolean; onToggle?: (v: boolean) => void };
+type MenuSection = { title: string; rows: MenuRow[] };
+
+function StatCard({ label, value, accent, G }: { label: string; value: string; accent?: boolean; G: any }) {
+  return (
+    <View style={[styles.statCard, { backgroundColor: G.cardBg, borderColor: G.cardBorder }, accent && { backgroundColor: G.accentSoft, borderColor: G.cardBorderActive }]}>
+      <Text style={[styles.statValue, { color: accent ? G.accent : G.textPrimary }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: G.textMuted }]}>{label}</Text>
+    </View>
+  );
+}
+
+function MenuRowItem({ row, last, G }: { row: MenuRow; last: boolean; G: any }) {
+  return (
+    <TouchableOpacity onPress={row.onPress} accessibilityLabel={row.label} activeOpacity={row.toggle ? 1 : 0.65}
+      style={[styles.menuRow, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: G.cardBorder }]}>
+      <View style={[styles.menuIcon, { backgroundColor: G.cardBg }, row.destructive && { backgroundColor: G.negative + '18' }]}>
+        <Text style={styles.menuIconTxt}>{row.icon}</Text>
+      </View>
+      <View style={styles.menuMeta}>
+        <Text style={[styles.menuLabel, { color: row.destructive ? G.negative : G.textPrimary }]}>{row.label}</Text>
+        {row.sublabel && <Text style={[styles.menuSublabel, { color: G.textMuted }]}>{row.sublabel}</Text>}
+      </View>
+      {row.toggle
+        ? <Switch value={row.toggleValue} onValueChange={row.onToggle} trackColor={{ false: G.cardBorder, true: G.accent }} thumbColor="#fff" />
+        : row.value
+          ? <Text style={[styles.menuValue, { color: G.textSecondary }]}>{row.value}</Text>
+          : <Text style={[styles.menuChevron, { color: G.textMuted }]}>›</Text>
+      }
+    </TouchableOpacity>
+  );
+}
+
+export default function ProfileScreen() {
+  const G      = useGlass();
+  const isDark = useIsDark();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { themeMode, setThemeMode } = useUiStore();
+
+  const displayName = user?.name  ?? 'Juan Sánchez';
+  const email       = user?.email ?? 'juan@ejemplo.com';
+  const initials    = displayName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
+
+  function toggleTheme(v: boolean) {
+    setThemeMode(v ? 'light' : 'dark');
+  }
+
+  const SECTIONS: MenuSection[] = [
+    {
+      title: 'Mi cuenta',
+      rows: [
+        { id: 'personal', icon: '👤', label: 'Datos personales',     sublabel: 'Nombre, apellido, DNI',       onPress: () => {} },
+        { id: 'email',    icon: '✉️', label: 'Correo electrónico',   value: email,                            onPress: () => {} },
+        { id: 'phone',    icon: '📱', label: 'Teléfono',             value: '+54 9 351 ···',                  onPress: () => {} },
+        { id: 'cbu',      icon: '🏦', label: 'CBU / Alias',          sublabel: 'Copiar datos bancarios',      onPress: () => {} },
+      ],
+    },
+    {
+      title: 'Seguridad',
+      rows: [
+        { id: 'pin',       icon: '🔐', label: 'PIN de seguridad',         sublabel: 'Cambiar PIN de 6 dígitos', onPress: () => {} },
+        { id: 'biometric', icon: '🪪', label: 'Face ID / Huella',         value: 'Activo',                      onPress: () => {} },
+        { id: '2fa',       icon: '🛡️', label: 'Autenticación 2FA',        value: 'Inactivo',                    onPress: () => {} },
+        { id: 'devices',   icon: '💻', label: 'Dispositivos conectados',  sublabel: '2 dispositivos',           onPress: () => {} },
+      ],
+    },
+    {
+      title: 'Preferencias',
+      rows: [
+        { id: 'theme',    icon: isDark ? '🌙' : '☀️', label: 'Modo claro', sublabel: isDark ? 'Tema oscuro activo' : 'Tema claro activo', toggle: true, toggleValue: !isDark, onToggle: toggleTheme },
+        { id: 'notif',    icon: '🔔', label: 'Notificaciones', sublabel: 'Push, email, SMS',  onPress: () => {} },
+        { id: 'currency', icon: '💱', label: 'Moneda principal', value: 'ARS',               onPress: () => {} },
+        { id: 'language', icon: '🌐', label: 'Idioma',           value: 'Español',            onPress: () => {} },
+      ],
+    },
+    {
+      title: 'Soporte',
+      rows: [
+        { id: 'help',    icon: '❓', label: 'Centro de ayuda',           onPress: () => {} },
+        { id: 'chat',    icon: '💬', label: 'Chat con soporte',          sublabel: 'Lun–Vie 9–18h', onPress: () => {} },
+        { id: 'terms',   icon: '📄', label: 'Términos y condiciones',   onPress: () => {} },
+        { id: 'privacy', icon: '🔒', label: 'Política de privacidad',   onPress: () => {} },
+      ],
+    },
+    {
+      title: '',
+      rows: [
+        { id: 'logout', icon: '↩', label: 'Cerrar sesión', destructive: true, onPress: logout },
+      ],
+    },
+  ];
+
+  return (
+    <View style={[styles.root, { backgroundColor: G.bgFrom }]}>
+      <LinearGradient colors={[G.bgFrom, G.bgMid, G.bgTo]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFillObject} />
+      <View style={[styles.headerOrb, { backgroundColor: G.orb1 }]} />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: NAV_SAFE_PAD }]}>
+
+          {/* Hero */}
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.hero}>
+            <View style={styles.avatarWrap}>
+              <LinearGradient colors={[Brand.primary, Brand.secondary]} style={styles.avatar}>
+                <Text style={styles.avatarInitials}>{initials}</Text>
+              </LinearGradient>
+              <TouchableOpacity style={[styles.editAvatarBtn, { backgroundColor: G.bgFrom, borderColor: G.cardBorder }]} accessibilityLabel="Cambiar foto">
+                <Text style={[styles.editAvatarIcon, { color: G.textSecondary }]}>✎</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.heroName,  { color: G.textPrimary }]}>{displayName}</Text>
+            <Text style={[styles.heroEmail, { color: G.textSecondary }]}>{email}</Text>
+            <View style={[styles.verifiedBadge, { backgroundColor: G.positive + '18', borderColor: G.positive + '40' }]}>
+              <Text style={[styles.verifiedTxt, { color: G.positive }]}>✓ Cuenta verificada</Text>
+            </View>
+          </Animated.View>
+
+          {/* Stats */}
+          <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.statsRow}>
+            <StatCard label="Transacciones" value="148"     G={G} />
+            <StatCard label="Balance"        value="$8.1k"  G={G} accent />
+            <StatCard label="Miembro desde"  value="May '25" G={G} />
+          </Animated.View>
+
+          {/* Plan */}
+          <Animated.View entering={FadeInDown.delay(160).duration(400)}>
+            <View style={[styles.planCard, { backgroundColor: G.cardBg, borderColor: G.cardBorder }]}>
+              <View style={styles.planLeft}>
+                <Text style={styles.planIcon}>⚡</Text>
+                <View>
+                  <Text style={[styles.planName, { color: G.textPrimary }]}>Plan Básico</Text>
+                  <Text style={[styles.planSub,  { color: G.textMuted }]}>Límite diario $50.000</Text>
+                </View>
+              </View>
+              <TouchableOpacity style={[styles.upgradeBtn, { backgroundColor: G.accentSoft, borderColor: G.cardBorderActive }]} accessibilityLabel="Mejorar plan">
+                <Text style={[styles.upgradeTxt, { color: G.accent }]}>Mejorar →</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          {/* Secciones */}
+          {SECTIONS.map((section, si) => (
+            <Animated.View key={section.title || `s${si}`} entering={FadeInDown.delay(200 + si * 60).duration(400)}>
+              {section.title
+                ? <Text style={[styles.sectionHeader, { color: G.textMuted }]}>{section.title}</Text>
+                : <View style={{ height: 8 }} />}
+              <View style={[styles.menuCard, { backgroundColor: G.cardBg, borderColor: G.cardBorder }]}>
+                {section.rows.map((row, ri) => (
+                  <MenuRowItem key={row.id} row={row} last={ri === section.rows.length - 1} G={G} />
+                ))}
+              </View>
+            </Animated.View>
+          ))}
+
+          <Text style={[styles.version, { color: G.textMuted }]}>SFVC v1.0.0 · Build 1</Text>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, overflow: 'hidden' },
+  safe: { flex: 1 },
+  headerOrb: { position: 'absolute', width: 300, height: 300, borderRadius: 150, top: -100, alignSelf: 'center', pointerEvents: 'none' },
+  scrollContent: { paddingHorizontal: H_PAD, paddingTop: Spacing.two, gap: 12 },
+  hero:          { alignItems: 'center', paddingVertical: Spacing.three, gap: 8 },
+  avatarWrap:    { position: 'relative', marginBottom: 4 },
+  avatar:        { width: 82, height: 82, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' },
+  avatarInitials:{ fontSize: 30, fontWeight: '800', color: '#fff' },
+  editAvatarBtn: { position: 'absolute', bottom: -4, right: -4, width: 26, height: 26, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  editAvatarIcon:{ fontSize: 13 },
+  heroName:      { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  heroEmail:     { fontSize: 13 },
+  verifiedBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, borderWidth: 0.5 },
+  verifiedTxt:   { fontSize: 11, fontWeight: '600' },
+  statsRow:      { flexDirection: 'row', gap: 8 },
+  statCard:      { flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 16, borderWidth: 0.5, gap: 4 },
+  statValue:     { fontSize: 17, fontWeight: '800' },
+  statLabel:     { fontSize: 9, letterSpacing: 0.4 },
+  planCard:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 16, borderWidth: 0.5 },
+  planLeft:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  planIcon:      { fontSize: 20 },
+  planName:      { fontSize: 14, fontWeight: '700' },
+  planSub:       { fontSize: 11, marginTop: 1 },
+  upgradeBtn:    { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, borderWidth: 0.5 },
+  upgradeTxt:    { fontSize: 12, fontWeight: '700' },
+  sectionHeader: { fontSize: 11, fontWeight: '600', letterSpacing: 0.8, paddingLeft: 4, marginTop: 4, marginBottom: -4 },
+  menuCard:      { borderRadius: 18, borderWidth: 0.5, overflow: 'hidden' },
+  menuRow:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, gap: 12 },
+  menuIcon:      { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  menuIconTxt:   { fontSize: 16 },
+  menuMeta:      { flex: 1, gap: 2 },
+  menuLabel:     { fontSize: 14, fontWeight: '500' },
+  menuSublabel:  { fontSize: 11 },
+  menuValue:     { fontSize: 12 },
+  menuChevron:   { fontSize: 20, lineHeight: 22 },
+  version:       { textAlign: 'center', fontSize: 10, marginTop: 8 },
+});
+</file>
+
+<file path="src/app/(app)/wallet.tsx">
+import { useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Glass, H_PAD, NAV_SAFE_PAD, Spacing } from '@/constants/theme';
+
+type Message = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  ts: string;
+};
+
+const SUGGESTIONS = [
+  '¿Cómo mejorar mi flujo de caja?',
+  '¿Cuánto gasté este mes?',
+  'Analiza mis ingresos',
+  '¿Cuándo conviene invertir?',
+];
+
+const INITIAL_MSGS: Message[] = [
+  {
+    id: '0',
+    role: 'assistant',
+    text: 'Hola 👋 Soy tu asistente financiero. Puedo ayudarte a entender tus finanzas, analizar tus movimientos y darte recomendaciones personalizadas.\n\n¿En qué te puedo ayudar hoy?',
+    ts: 'Ahora',
+  },
+];
+
+function formatTs(): string {
+  return new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+export default function AIChatScreen() {
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MSGS);
+  const [input,    setInput]    = useState('');
+  const [thinking, setThinking] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Send button scale
+  const sendScale = useSharedValue(1);
+  const sendAnim  = useAnimatedStyle(() => ({ transform: [{ scale: sendScale.value }] }));
+
+  function scrollToBottom() {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+  }
+
+  function handleSend(text?: string) {
+    const msg = (text ?? input).trim();
+    if (!msg || thinking) return;
+    setInput('');
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: msg, ts: formatTs() };
+    setMessages((prev) => [...prev, userMsg]);
+    setThinking(true);
+    scrollToBottom();
+
+    sendScale.value = withSpring(0.85, { duration: 80 }, () => {
+      sendScale.value = withSpring(1, { duration: 200 });
+    });
+
+    // Simula respuesta — reemplazar con llamada real a la IA
+    setTimeout(() => {
+      const replies: Record<string, string> = {
+        '¿Cómo mejorar mi flujo de caja?':
+          'Para mejorar tu flujo de caja te recomiendo:\n\n1. Revisar gastos recurrentes y eliminar los innecesarios\n2. Anticipar cobros pendientes\n3. Crear un fondo de emergencia de 3 meses\n\n¿Quieres que analice tus movimientos actuales?',
+        '¿Cuánto gasté este mes?':
+          'Este mes gastaste **$4.200** distribuidos en:\n• Servicios: $340\n• Transferencias: $500\n• Otros: $3.360\n\nEstás **12% por debajo** del mes anterior. 📉✅',
+        'Analiza mis ingresos':
+          'Tus ingresos de mayo suman **$12.400**. El 76% proviene de transferencias recibidas y el 24% de cobros de facturas. Tu tendencia es positiva (+8% vs abril). 📈',
+        '¿Cuándo conviene invertir?':
+          'Con tu balance actual de $8.170 y un flujo positivo, podrías considerar:\n\n• Plazos fijos en pesos para el corto plazo\n• FCI money market para liquidez inmediata\n\n¿Te gustaría que te explique cada opción?',
+      };
+      const fallback = 'Entendido. Estoy procesando tu consulta con los datos de tu cuenta. Dame un momento para darte la respuesta más precisa posible. 🤖';
+      const reply = replies[msg] ?? fallback;
+
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), role: 'assistant', text: reply, ts: formatTs() },
+      ]);
+      setThinking(false);
+      scrollToBottom();
+    }, 1400);
+  }
+
+  return (
+    <View style={styles.root}>
+      <LinearGradient
+        colors={[Glass.bgFrom, Glass.bgMid, Glass.bgTo]}
+        start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.aiAvatar}>
+            <Text style={styles.aiAvatarIcon}>◈</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>Asistente IA</Text>
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, { backgroundColor: thinking ? '#facc15' : '#34d399' }]} />
+              <Text style={styles.statusTxt}>{thinking ? 'Pensando…' : 'En línea'}</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.headerBtn} accessibilityLabel="Nueva conversación">
+            <Text style={styles.headerBtnTxt}>✦ Nueva</Text>
+          </TouchableOpacity>
+        </View>
+
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}>
+
+          {/* Messages */}
+          <ScrollView
+            ref={scrollRef}
+            style={styles.msgList}
+            contentContainerStyle={styles.msgContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={scrollToBottom}>
+
+            {messages.map((msg, i) => (
+              <Animated.View
+                key={msg.id}
+                entering={FadeInDown.duration(300).springify()}
+                style={[
+                  styles.msgRow,
+                  msg.role === 'user' ? styles.msgRowUser : styles.msgRowAssistant,
+                ]}>
+                {msg.role === 'assistant' && (
+                  <View style={styles.msgAvatar}>
+                    <Text style={{ fontSize: 14 }}>◈</Text>
+                  </View>
+                )}
+                <View style={[
+                  styles.bubble,
+                  msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                ]}>
+                  <Text style={[
+                    styles.bubbleText,
+                    msg.role === 'user' && { color: '#fff' },
+                  ]}>
+                    {msg.text}
+                  </Text>
+                  <Text style={styles.bubbleTs}>{msg.ts}</Text>
+                </View>
+              </Animated.View>
+            ))}
+
+            {/* Typing indicator */}
+            {thinking && (
+              <Animated.View
+                entering={FadeIn.duration(200)}
+                style={[styles.msgRow, styles.msgRowAssistant]}>
+                <View style={styles.msgAvatar}>
+                  <Text style={{ fontSize: 14 }}>◈</Text>
+                </View>
+                <View style={[styles.bubble, styles.bubbleAssistant, styles.typingBubble]}>
+                  <Text style={styles.typingDots}>● ● ●</Text>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Sugerencias — solo si hay 1 mensaje (el inicial) */}
+            {messages.length === 1 && (
+              <Animated.View
+                entering={FadeInUp.delay(400).duration(400)}
+                style={styles.suggestions}>
+                <Text style={styles.suggestionsLabel}>Sugerencias</Text>
+                <View style={styles.suggestionGrid}>
+                  {SUGGESTIONS.map((s) => (
+                    <TouchableOpacity
+                      key={s}
+                      onPress={() => handleSend(s)}
+                      style={styles.suggestionChip}
+                      accessibilityLabel={s}>
+                      <Text style={styles.suggestionTxt}>{s}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </Animated.View>
+            )}
+          </ScrollView>
+
+          {/* Input */}
+          <View style={[styles.inputBar, { marginBottom: NAV_SAFE_PAD - 16 }]}>
+            <TextInput
+              style={styles.textInput}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Consultá sobre tus finanzas…"
+              placeholderTextColor={Glass.textMuted}
+              multiline
+              maxLength={500}
+              returnKeyType="send"
+              onSubmitEditing={() => handleSend()}
+              blurOnSubmit={false}
+            />
+            <Animated.View style={sendAnim}>
+              <TouchableOpacity
+                onPress={() => handleSend()}
+                disabled={!input.trim() || thinking}
+                style={[styles.sendBtn, (!input.trim() || thinking) && styles.sendBtnDisabled]}
+                accessibilityLabel="Enviar mensaje">
+                <LinearGradient
+                  colors={input.trim() && !thinking
+                    ? [Glass.centerBtnFrom, Glass.centerBtnTo]
+                    : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.08)']}
+                  style={styles.sendBtnGrad}>
+                  <Text style={styles.sendBtnIcon}>↑</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  safe: { flex: 1 },
+
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: H_PAD, paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+    gap: 12,
+  },
+  aiAvatar: {
+    width: 40, height: 40, borderRadius: 14,
+    backgroundColor: 'rgba(124,58,237,0.25)',
+    borderWidth: 1, borderColor: 'rgba(124,58,237,0.40)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  aiAvatarIcon:  { fontSize: 18, color: '#c4b5fd' },
+  headerTitle:   { fontSize: 16, fontWeight: '700', color: Glass.textPrimary },
+  statusRow:     { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
+  statusDot:     { width: 6, height: 6, borderRadius: 3 },
+  statusTxt:     { fontSize: 11, color: Glass.textSecondary },
+  headerBtn: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.12)',
+  },
+  headerBtnTxt: { fontSize: 12, color: Glass.textSecondary },
+
+  msgList:    { flex: 1 },
+  msgContent: { paddingHorizontal: H_PAD, paddingTop: Spacing.two, gap: 12, paddingBottom: 8 },
+
+  msgRow:          { flexDirection: 'row', gap: 8, maxWidth: '88%' },
+  msgRowUser:      { alignSelf: 'flex-end', flexDirection: 'row-reverse' },
+  msgRowAssistant: { alignSelf: 'flex-start' },
+
+  msgAvatar: {
+    width: 28, height: 28, borderRadius: 10,
+    backgroundColor: 'rgba(124,58,237,0.20)',
+    borderWidth: 0.5, borderColor: 'rgba(124,58,237,0.30)',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 2, flexShrink: 0,
+  },
+
+  bubble: {
+    borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10,
+    maxWidth: '100%', gap: 4,
+  },
+  bubbleUser: {
+    backgroundColor: Glass.centerBtnFrom,
+    borderBottomRightRadius: 4,
+  },
+  bubbleAssistant: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.10)',
+    borderBottomLeftRadius: 4,
+  },
+  bubbleText: { fontSize: 14, color: Glass.textPrimary, lineHeight: 20 },
+  bubbleTs:   { fontSize: 10, color: 'rgba(255,255,255,0.28)', alignSelf: 'flex-end' },
+
+  typingBubble: { paddingVertical: 12, paddingHorizontal: 16 },
+  typingDots:   { fontSize: 10, color: Glass.textMuted, letterSpacing: 3 },
+
+  suggestions: { marginTop: Spacing.two, gap: 10 },
+  suggestionsLabel: { fontSize: 11, color: Glass.textMuted, letterSpacing: 0.5 },
+  suggestionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  suggestionChip: {
+    paddingHorizontal: 12, paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 12, borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  suggestionTxt: { fontSize: 12, color: Glass.textSecondary },
+
+  inputBar: {
+    flexDirection: 'row', alignItems: 'flex-end',
+    paddingHorizontal: H_PAD, paddingTop: 10, paddingBottom: 10,
+    gap: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(10,8,24,0.70)',
+  },
+  textInput: {
+    flex: 1, minHeight: 40, maxHeight: 100,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10,
+    fontSize: 14, color: Glass.textPrimary,
+  },
+  sendBtn:         { flexShrink: 0 },
+  sendBtnDisabled: { opacity: 0.45 },
+  sendBtnGrad: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sendBtnIcon: { fontSize: 18, color: '#fff', fontWeight: '700' },
+});
+</file>
+
+<file path="src/app/(auth)/_layout.tsx">
+import { Redirect, Stack } from 'expo-router';
+import { useAuthStore } from '@/stores/auth.store';
+
+export default function AuthLayout() {
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
+  if (!isHydrated) return null;
+  if (isAuthenticated) return <Redirect href="/(app)" />;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="login" />
+    </Stack>
+  );
+}
+</file>
+
+<file path="src/app/(auth)/login.tsx">
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+
+export default function LoginScreen() {
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ThemedText type="title">Iniciar sesión</ThemedText>
+        <ThemedText themeColor="textSecondary">
+          Implementar formulario de login aquí
+        </ThemedText>
+      </SafeAreaView>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
+});
+</file>
+
+<file path="src/components/custom-tab-bar.tsx">
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle, useSharedValue,
+  withRepeat, withSequence, withSpring, withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { H_PAD, NAV_BOTTOM, NAV_HEIGHT } from '@/constants/theme';
+import { useGlass } from '@/hooks/use-glass';
+import { useUiStore } from '@/stores/ui.store';
+import { useAuthStore } from '@/stores/auth.store';
+
+type Tab = { name: string; href: string; label: string; icon?: string; center?: boolean; isAvatar?: boolean };
+
+const TABS: Tab[] = [
+  { name: 'index',   href: '/(app)',         label: 'Inicio', icon: '⌂' },
+  { name: 'explore', href: '/(app)/explore', label: 'Reels',  icon: '▶' },
+  { name: 'center',  href: '',               label: '',        center: true },
+  { name: 'wallet',  href: '/(app)/wallet',  label: 'IA',     icon: '◈' },
+  { name: 'profile', href: '/(app)/profile', label: 'Perfil', isAvatar: true },
+];
+
+function usePressSpring() {
+  const scale = useSharedValue(1);
+  const anim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  function press(cb: () => void) {
+    scale.value = withSpring(0.85, { duration: 80 }, () => { scale.value = withSpring(1, { duration: 200 }); });
+    cb();
+  }
+  return { anim, press };
+}
+
+function getInitials(name: string) {
+  return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
+
+function SmartCenterBtn() {
+  const router = useRouter();
+  const G      = useGlass();
+  const { centerApp, loadCenterApp } = useUiStore();
+  useEffect(() => { loadCenterApp(); }, []);
+
+  const scale    = useSharedValue(1);
+  const glowSize = useSharedValue(0);
+  const btnAnim  = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const glowAnim = useAnimatedStyle(() => ({
+    width: 50 + glowSize.value, height: 50 + glowSize.value,
+    borderRadius: (50 + glowSize.value) / 2,
+    opacity: glowSize.value / 30,
+    marginLeft: -(glowSize.value / 2), marginTop: -(glowSize.value / 2),
+  }));
+
+  const longTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLong   = useRef(false);
+  const pressedAt = useRef(0);
+
+  function startPress() {
+    didLong.current   = false;
+    pressedAt.current = Date.now();
+    scale.value = withTiming(0.93, { duration: 600 });
+    glowSize.value = withRepeat(withSequence(withTiming(28, { duration: 280 }), withTiming(8, { duration: 280 })), -1, false);
+    longTimer.current = setTimeout(() => {
+      didLong.current = true;
+      scale.value    = withSpring(1, { damping: 8 });
+      glowSize.value = withTiming(0, { duration: 150 });
+      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      router.push('/(app)/apps' as any);
+    }, 600);
+  }
+
+  function endPress() {
+    if (longTimer.current) clearTimeout(longTimer.current);
+    scale.value    = withSpring(1, { damping: 10 });
+    glowSize.value = withTiming(0, { duration: 120 });
+    if (!didLong.current && Date.now() - pressedAt.current < 600) {
+      scale.value = withSequence(withSpring(0.85, { duration: 80 }), withSpring(1, { duration: 200 }));
+      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      router.push((centerApp?.href ?? '/(app)/apps') as any);
+    }
+  }
+
+  const icon    = centerApp?.icon    ?? '✦';
+  const colFrom = centerApp?.color   ?? G.centerBtnFrom;
+  const colTo   = centerApp?.colorTo ?? G.centerBtnTo;
+
+  return (
+    <View style={styles.centerWrapper}>
+      <Animated.View style={[styles.glowRing, { backgroundColor: G.accentSoft }, glowAnim]} />
+      <Animated.View style={btnAnim}>
+        <TouchableOpacity onPressIn={startPress} onPressOut={endPress} activeOpacity={1}
+          accessibilityLabel={centerApp ? `Abrir ${centerApp.label}` : 'Configurar acceso rápido'}>
+          <LinearGradient colors={[colFrom, colTo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.centerBtn}>
+            <Text style={styles.centerIcon}>{icon}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+      {centerApp
+        ? <Text style={[styles.centerLabel, { color: G.textSecondary }]} numberOfLines={1}>{centerApp.label}</Text>
+        : <Text style={[styles.centerHint,  { color: G.textMuted }]}>mantén para apps</Text>
+      }
+    </View>
+  );
+}
+
+function AvatarBtn({ tab, isActive }: { tab: Tab; isActive: boolean }) {
+  const router  = useRouter();
+  const G       = useGlass();
+  const { anim, press } = usePressSpring();
+  const { user } = useAuthStore();
+  const initials = user ? getInitials(user.name) : 'U';
+  return (
+    <TouchableOpacity onPress={() => press(() => router.push(tab.href as any))} accessibilityLabel="Mi perfil" style={styles.tabItem}>
+      <Animated.View style={[anim, styles.avatarTab, {
+        backgroundColor: G.accentSoft,
+        borderColor: isActive ? G.accent : G.cardBorder,
+      }]}>
+        <Text style={[styles.avatarTabTxt, { color: G.accent }]}>{initials}</Text>
+      </Animated.View>
+      {isActive && <View style={[styles.activeDot, { backgroundColor: G.accent }]} />}
+    </TouchableOpacity>
+  );
+}
+
+function RegularBtn({ tab, isActive }: { tab: Tab; isActive: boolean }) {
+  const router = useRouter();
+  const G      = useGlass();
+  const { anim, press } = usePressSpring();
+  return (
+    <TouchableOpacity onPress={() => press(() => router.push(tab.href as any))} accessibilityLabel={tab.label} style={styles.tabItem}>
+      <Animated.View style={[anim, styles.tabInner]}>
+        <Text style={[styles.tabIcon, isActive && { color: G.textPrimary }]}>{tab.icon}</Text>
+      </Animated.View>
+      {isActive && <View style={[styles.activeDot, { backgroundColor: G.accent }]} />}
+    </TouchableOpacity>
+  );
+}
+
+export function CustomTabBar() {
+  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const G      = useGlass();
+  const isWeb  = Platform.OS === 'web';
+
+  function isActive(tab: Tab) {
+    if (tab.center) return false;
+    if (tab.href === '/(app)') return pathname === '/' || pathname === '/(app)';
+    return pathname.includes(tab.name);
+  }
+
+  const containerStyle = isWeb
+    ? [styles.container, { backgroundColor: G.navBg, borderColor: G.navBorder }, styles.containerWeb]
+    : [styles.container, { backgroundColor: G.navBg, borderColor: G.navBorder }, {
+        position: 'absolute' as const,
+        bottom: (insets.bottom || 0) + NAV_BOTTOM,
+        left: H_PAD, right: H_PAD,
+      }];
+
+  return (
+    <View style={containerStyle}>
+      {TABS.map((t) => {
+        if (t.center)   return <SmartCenterBtn  key={t.name} />;
+        if (t.isAvatar) return <AvatarBtn key={t.name} tab={t} isActive={isActive(t)} />;
+        return              <RegularBtn key={t.name} tab={t} isActive={isActive(t)} />;
+      })}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    height: NAV_HEIGHT, borderWidth: 0.5,
+    borderRadius: NAV_HEIGHT / 2,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: 8, zIndex: 100,
+  },
+  containerWeb: { position: 'sticky' as any, bottom: NAV_BOTTOM, marginHorizontal: H_PAD, marginBottom: NAV_BOTTOM, alignSelf: 'stretch' },
+  tabItem:   { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8 },
+  tabInner:  { alignItems: 'center' },
+  tabIcon:   { fontSize: 18, lineHeight: 22, color: 'rgba(128,128,128,0.50)' },
+  activeDot: { width: 3, height: 3, borderRadius: 1.5, marginTop: 2 },
+  avatarTab: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  avatarTabTxt: { fontSize: 10, fontWeight: '700' },
+  centerWrapper: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: -26, position: 'relative' },
+  glowRing:  { position: 'absolute', zIndex: -1 },
+  centerBtn: { width: 50, height: 50, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
+  centerIcon: { fontSize: 22, color: '#fff', lineHeight: 26 },
+  centerLabel: { fontSize: 9, lineHeight: 11, maxWidth: 52, textAlign: 'center' },
+  centerHint:  { fontSize: 8, lineHeight: 10, textAlign: 'center' },
+});
+</file>
+
+<file path="src/components/error-boundary.tsx">
+import React, { Component, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Spacing } from '@/constants/theme';
+
+type Props = { children: ReactNode };
+type State = { hasError: boolean; error: Error | null };
+
+export class ErrorBoundary extends Component<Props, State> {
+  state: State = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ErrorBoundary]', error, info);
+    // Sentry.captureException(error); // descomentar cuando Sentry esté configurado
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ThemedView style={styles.container}>
+          <ThemedText type="subtitle">Algo salió mal</ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.message}>
+            {this.state.error?.message ?? 'Error desconocido'}
+          </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.button}>
+            <ThemedText
+              type="small"
+              onPress={this.handleReset}>
+              Reintentar
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.four,
+    gap: Spacing.three,
+  },
+  message: {
+    textAlign: 'center',
+  },
+  button: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.three,
+    marginTop: Spacing.two,
+  },
+});
+</file>
+
+<file path="src/components/external-link.tsx">
+import { Href, Link } from 'expo-router';
+import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
+import { type ComponentProps } from 'react';
+
+type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string };
+
+export function ExternalLink({ href, ...rest }: Props) {
+  return (
+    <Link
+      target="_blank"
+      {...rest}
+      href={href}
+      onPress={async (event) => {
+        if (process.env.EXPO_OS !== 'web') {
+          // Prevent the default behavior of linking to the default browser on native.
+          event.preventDefault();
+          // Open the link in an in-app browser.
+          await openBrowserAsync(href, {
+            presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
+          });
+        }
+      }}
+    />
+  );
+}
+</file>
+
+<file path="src/components/glass-card.tsx">
+import { StyleSheet, View, type ViewProps } from 'react-native';
+import { useGlass } from '@/hooks/use-glass';
+
+type GlassCardProps = ViewProps & { active?: boolean };
+
+export function GlassCard({ style, active = false, children, ...props }: GlassCardProps) {
+  const G = useGlass();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: G.cardBg,
+          borderColor: active ? G.cardBorderActive : G.cardBorder,
+        },
+        style,
+      ]}
+      {...props}>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { borderWidth: 0.5, borderRadius: 20, overflow: 'hidden' },
+});
+</file>
+
+<file path="src/components/home-bottom-sheet.tsx">
+import { useEffect, useRef } from 'react';
+import {
+  Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
+
+import { Glass, Spacing } from '@/constants/theme';
+
+const { height: SCREEN_H, width: SCREEN_W } = Dimensions.get('window');
+const SHEET_RADIUS = 24;
+
+type Item = { id: string; title: string; desc: string; amount: string } | null;
+type Props = { isOpen: boolean; onClose: () => void; item: Item };
+
+export function HomeBottomSheet({ isOpen, onClose, item }: Props) {
+  const translateY     = useSharedValue(SCREEN_H);
+  const overlayOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      overlayOpacity.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.ease) });
+      translateY.value     = withTiming(0,       { duration: 320, easing: Easing.out(Easing.cubic) });
+    } else {
+      overlayOpacity.value = withTiming(0, { duration: 220 });
+      translateY.value     = withTiming(SCREEN_H, { duration: 280, easing: Easing.in(Easing.ease) });
+    }
+  }, [isOpen]);
+
+  const overlayStyle = useAnimatedStyle(() => ({ opacity: overlayOpacity.value }));
+  const sheetStyle   = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+
+  const ACTIONS = [
+    { id: '1', label: 'Nueva transferencia', icon: '↑' },
+    { id: '2', label: 'Pagar servicio',       icon: '⚡' },
+    { id: '3', label: 'Ver historial',        icon: '☰' },
+  ];
+
+  const DETAIL_ROWS = item ? [
+    { label: 'Fecha',      value: 'Hoy, 14:32' },
+    { label: 'Estado',     value: 'Completado', color: Glass.positive },
+    { label: 'Referencia', value: `TXN-${item.id}928374` },
+  ] : [];
+
+  return (
+    <Modal
+      visible={isOpen}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}>
+
+      {/* Overlay — toca para cerrar */}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[StyleSheet.absoluteFillObject, styles.overlay, overlayStyle]} />
+      </TouchableWithoutFeedback>
+
+      {/* Sheet — anclado al fondo, ancho 100% de la pantalla */}
+      <Animated.View style={[styles.sheetWrapper, sheetStyle]}>
+        {/* Handle */}
+        <View style={styles.handleWrap}>
+          <View style={styles.handle} />
+        </View>
+
+        {/* Contenido scrolleable */}
+        <ScrollView
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+
+          {item ? (
+            <>
+              <Text style={styles.sheetTitle}>{item.title}</Text>
+              <Text style={styles.sheetSub}>{item.desc}</Text>
+
+              {/* Monto */}
+              <View style={styles.amountCard}>
+                <Text style={styles.amountLabel}>MONTO</Text>
+                <Text style={[styles.amountValue,
+                  { color: item.amount.startsWith('+') ? Glass.positive : Glass.negative }]}>
+                  {item.amount}
+                </Text>
+              </View>
+
+              {/* Detalles */}
+              <View style={styles.detailCard}>
+                {DETAIL_ROWS.map((row, i) => (
+                  <View key={row.label}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>{row.label}</Text>
+                      <Text style={[styles.detailValue, row.color ? { color: row.color } : {}]}>
+                        {row.value}
+                      </Text>
+                    </View>
+                    {i < DETAIL_ROWS.length - 1 && <View style={styles.divider} />}
+                  </View>
+                ))}
+              </View>
+
+              <TouchableOpacity onPress={onClose} accessibilityLabel="Compartir" style={styles.btn}>
+                <Text style={styles.btnText}>Compartir comprobante</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} accessibilityLabel="Cerrar" style={styles.cancelBtn}>
+                <Text style={styles.cancelText}>Cerrar</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.sheetTitle}>Acciones</Text>
+              <View style={styles.detailCard}>
+                {ACTIONS.map((action, i) => (
+                  <View key={action.id}>
+                    <TouchableOpacity
+                      onPress={onClose}
+                      accessibilityLabel={action.label}
+                      style={styles.actionRow}>
+                      <View style={styles.actionIcon}>
+                        <Text style={styles.actionIconTxt}>{action.icon}</Text>
+                      </View>
+                      <Text style={styles.detailValue}>{action.label}</Text>
+                      <Text style={styles.chevron}>›</Text>
+                    </TouchableOpacity>
+                    {i < ACTIONS.length - 1 && <View style={styles.divider} />}
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity onPress={onClose} accessibilityLabel="Cerrar" style={styles.cancelBtn}>
+                <Text style={styles.cancelText}>Cerrar</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </Animated.View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  overlay: { backgroundColor: Glass.overlayBg },
+
+  // Sheet anclado al fondo, ocupa ancho completo
+  sheetWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,                        // 100% del ancho de pantalla
+    maxHeight: SCREEN_H * 0.82,
+    backgroundColor: Glass.sheetBg,
+    borderTopLeftRadius: SHEET_RADIUS,
+    borderTopRightRadius: SHEET_RADIUS,
+    borderWidth: 0.5,
+    borderColor: Glass.cardBorder,
+    borderBottomWidth: 0,
+    overflow: 'hidden',
+  },
+
+  handleWrap: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 36, height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+
+  scrollContent: {
+    paddingHorizontal: Spacing.four,
+    paddingBottom: Spacing.six,
+    gap: Spacing.three,
+  },
+
+  sheetTitle: { fontSize: 20, fontWeight: '600', color: Glass.textPrimary, marginTop: Spacing.one },
+  sheetSub:   { fontSize: 13, color: Glass.textSecondary, marginTop: -Spacing.two },
+
+  amountCard: {
+    backgroundColor: Glass.cardBg, borderWidth: 0.5, borderColor: Glass.cardBorder,
+    borderRadius: 16, padding: Spacing.four, alignItems: 'center', gap: 4,
+  },
+  amountLabel: { fontSize: 10, color: Glass.textSecondary, letterSpacing: 0.8 },
+  amountValue: { fontSize: 36, fontWeight: '700', letterSpacing: -0.5 },
+
+  detailCard: {
+    backgroundColor: Glass.cardBg, borderWidth: 0.5,
+    borderColor: Glass.cardBorder, borderRadius: 16, overflow: 'hidden',
+  },
+  detailRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: 13 },
+  detailLabel:{ fontSize: 13, color: Glass.textSecondary },
+  detailValue:{ fontSize: 13, color: Glass.textPrimary, fontWeight: '500' },
+  divider:    { height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.08)', marginHorizontal: Spacing.three },
+
+  btn:       { backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 0.5, borderColor: Glass.cardBorder, borderRadius: 14, padding: Spacing.three, alignItems: 'center' },
+  btnText:   { fontSize: 14, fontWeight: '600', color: Glass.textPrimary },
+  cancelBtn: { backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 0.5, borderColor: Glass.cardBorder, borderRadius: 14, padding: Spacing.three, alignItems: 'center' },
+  cancelText:{ fontSize: 14, color: Glass.textSecondary },
+
+  actionRow:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: 13, gap: 12 },
+  actionIcon:   { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center' },
+  actionIconTxt:{ fontSize: 14, color: Glass.textPrimary },
+  chevron:      { marginLeft: 'auto', fontSize: 20, color: Glass.textSecondary },
+});
+</file>
+
+<file path="src/components/pressable-with-haptics.tsx">
+import * as Haptics from 'expo-haptics';
+import { Pressable, type PressableProps, StyleSheet } from 'react-native';
+
+type PressableWithHapticsProps = PressableProps & {
+  accessibilityLabel: string;
+  hapticStyle?: Haptics.ImpactFeedbackStyle;
+};
+
+export function PressableWithHaptics({
+  onPress,
+  hapticStyle = Haptics.ImpactFeedbackStyle.Light,
+  style,
+  ...props
+}: PressableWithHapticsProps) {
+  async function handlePress(e: Parameters<NonNullable<PressableProps['onPress']>>[0]) {
+    await Haptics.impactAsync(hapticStyle);
+    onPress?.(e);
+  }
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.base,
+        pressed && styles.pressed,
+        typeof style === 'function' ? style({ pressed }) : style,
+      ]}
+      {...props}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  base: {},
+  pressed: { opacity: 0.7 },
+});
+</file>
+
+<file path="src/components/themed-text.tsx">
+import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+
+import { Fonts, ThemeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+export type ThemedTextProps = TextProps & {
+  type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
+  themeColor?: ThemeColor;
+};
+
+export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
+  const theme = useTheme();
+
+  return (
+    <Text
+      style={[
+        { color: theme[themeColor ?? 'text'] },
+        type === 'default' && styles.default,
+        type === 'title' && styles.title,
+        type === 'small' && styles.small,
+        type === 'smallBold' && styles.smallBold,
+        type === 'subtitle' && styles.subtitle,
+        type === 'link' && styles.link,
+        type === 'linkPrimary' && styles.linkPrimary,
+        type === 'code' && styles.code,
+        style,
+      ]}
+      {...rest}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  small: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: 500,
+  },
+  smallBold: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: 700,
+  },
+  default: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: 500,
+  },
+  title: {
+    fontSize: 48,
+    fontWeight: 600,
+    lineHeight: 52,
+  },
+  subtitle: {
+    fontSize: 32,
+    lineHeight: 44,
+    fontWeight: 600,
+  },
+  link: {
+    lineHeight: 30,
+    fontSize: 14,
+  },
+  linkPrimary: {
+    lineHeight: 30,
+    fontSize: 14,
+    color: '#3c87f7',
+  },
+  code: {
+    fontFamily: Fonts.mono,
+    fontWeight: Platform.select({ android: 700 }) ?? 500,
+    fontSize: 12,
+  },
+});
+</file>
+
+<file path="src/components/themed-view.tsx">
+import { View, type ViewProps } from 'react-native';
+
+import { ThemeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+export type ThemedViewProps = ViewProps & {
+  lightColor?: string;
+  darkColor?: string;
+  type?: ThemeColor;
+};
+
+export function ThemedView({ style, lightColor, darkColor, type, ...otherProps }: ThemedViewProps) {
+  const theme = useTheme();
+
+  return <View style={[{ backgroundColor: theme[type ?? 'background'] }, style]} {...otherProps} />;
+}
+</file>
+
+<file path="src/components/ui/collapsible.tsx">
+import { SymbolView } from 'expo-symbols';
+import { PropsWithChildren, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const theme = useTheme();
+
+  return (
+    <ThemedView>
+      <Pressable
+        style={({ pressed }) => [styles.heading, pressed && styles.pressedHeading]}
+        onPress={() => setIsOpen((value) => !value)}>
+        <ThemedView type="backgroundElement" style={styles.button}>
+          <SymbolView
+            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+            size={14}
+            weight="bold"
+            tintColor={theme.text}
+            style={{ transform: [{ rotate: isOpen ? '-90deg' : '90deg' }] }}
+          />
+        </ThemedView>
+
+        <ThemedText type="small">{title}</ThemedText>
+      </Pressable>
+      {isOpen && (
+        <Animated.View entering={FadeIn.duration(200)}>
+          <ThemedView type="backgroundElement" style={styles.content}>
+            {children}
+          </ThemedView>
+        </Animated.View>
+      )}
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  heading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  pressedHeading: {
+    opacity: 0.7,
+  },
+  button: {
+    width: Spacing.four,
+    height: Spacing.four,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    marginTop: Spacing.three,
+    borderRadius: Spacing.three,
+    marginLeft: Spacing.four,
+    padding: Spacing.four,
+  },
+});
+</file>
+
+<file path="src/components/ui/skeleton-box.tsx">
+import { useEffect } from 'react';
+import { StyleSheet, type ViewStyle } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { useTheme } from '@/hooks/use-theme';
+
+type SkeletonBoxProps = {
+  width?: number | `${number}%`;
+  height?: number;
+  borderRadius?: number;
+  style?: ViewStyle;
+};
+
+export function SkeletonBox({
+  width = '100%',
+  height = 16,
+  borderRadius = 8,
+  style,
+}: SkeletonBoxProps) {
+  const theme = useTheme();
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, [opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.base,
+        {
+          width,
+          height,
+          borderRadius,
+          backgroundColor: theme.backgroundElement,
+        },
+        animatedStyle,
+        style,
+      ]}
+    />
+  );
+}
+
+type SkeletonTextProps = {
+  lines?: number;
+  style?: ViewStyle;
+};
+
+export function SkeletonText({ lines = 3, style }: SkeletonTextProps) {
+  return (
+    <Animated.View style={[styles.textContainer, style]}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <SkeletonBox
+          key={i}
+          width={i === lines - 1 ? '60%' : '100%'}
+          height={14}
+          style={styles.textLine}
+        />
+      ))}
+    </Animated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  base: {},
+  textContainer: { gap: 8 },
+  textLine: {},
+});
+</file>
+
+<file path="src/constants/env.ts">
+import Constants from 'expo-constants';
+
+type AppEnv = 'development' | 'staging' | 'production';
+
+type Env = {
+  APP_ENV: AppEnv;
+  API_URL: string;
+  SENTRY_DSN: string;
+};
+
+const extra = Constants.expoConfig?.extra ?? {};
+
+export const ENV: Env = {
+  APP_ENV: (extra.APP_ENV as AppEnv) ?? 'development',
+  API_URL: extra.API_URL ?? 'https://api.example.com',
+  SENTRY_DSN: extra.SENTRY_DSN ?? '',
+};
+</file>
+
+<file path="src/global.css">
+:root {
+  --font-display:
+    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    Liberation Mono, Courier New, monospace;
+  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: #0f0c29;
+}
+</file>
+
+<file path="src/hooks/use-auth.ts">
+import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/stores/auth.store';
+import { clearAllTokens } from '@/services/keychain';
+import { toast } from '@/stores/ui.store';
+
+export function useAuth() {
+  const router = useRouter();
+  const { user, isAuthenticated, logout: storeLogout } = useAuthStore();
+
+  async function logout() {
+    try {
+      await clearAllTokens();
+      storeLogout();
+      router.replace('/(auth)/login');
+    } catch {
+      toast.error('Error al cerrar sesión');
+    }
+  }
+
+  return { user, isAuthenticated, logout };
+}
+</file>
+
+<file path="src/hooks/use-color-scheme.ts">
+export { useColorScheme } from 'react-native';
+</file>
+
+<file path="src/hooks/use-color-scheme.web.ts">
+import { useEffect, useState } from 'react';
+import { useColorScheme as useRNColorScheme } from 'react-native';
+
+/**
+ * To support static rendering, this value needs to be re-calculated on the client side for web
+ */
+export function useColorScheme() {
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
+  const colorScheme = useRNColorScheme();
+
+  if (hasHydrated) {
+    return colorScheme;
+  }
+
+  return 'light';
+}
+</file>
+
+<file path="src/hooks/use-network-status.ts">
+import NetInfo from '@react-native-community/netinfo';
+import { onlineManager } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+
+// Conecta NetInfo con TanStack Query para pausa/resume automático
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
+
+export function useNetworkStatus() {
+  const [isConnected, setIsConnected] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(!!state.isConnected);
+    });
+    return unsubscribe;
+  }, []);
+
+  return { isConnected };
+}
+</file>
+
+<file path="src/hooks/use-theme.ts">
+/**
+ * Learn more about light and dark modes:
+ * https://docs.expo.dev/guides/color-schemes/
+ */
+
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+export function useTheme() {
+  const scheme = useColorScheme();
+  const theme = scheme === 'unspecified' ? 'light' : scheme;
+
+  return Colors[theme];
+}
+</file>
+
+<file path="src/services/api.ts">
+import { ENV } from '@/constants/env';
+import { getToken, saveToken, removeToken } from '@/services/keychain';
+
+type RequestOptions = RequestInit & {
+  skipAuth?: boolean;
+};
+
+class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+    this.name = 'ApiError';
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const refreshToken = await getToken('refresh_token');
+    if (!refreshToken) return null;
+
+    const res = await fetch(`${ENV.API_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) {
+      await removeToken('access_token');
+      await removeToken('refresh_token');
+      return null;
+    }
+
+    const data = await res.json();
+    await saveToken('access_token', data.access_token);
+    return data.access_token;
+  } catch {
+    return null;
+  }
+}
+
+export async function request<T>(
+  path: string,
+  options: RequestOptions = {}
+): Promise<T> {
+  const { skipAuth = false, ...init } = options;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init.headers as Record<string, string>),
+  };
+
+  if (!skipAuth) {
+    const token = await getToken('access_token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${ENV.API_URL}${path}`, { ...init, headers });
+
+  if (res.status === 401 && !skipAuth) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      const retry = await fetch(`${ENV.API_URL}${path}`, { ...init, headers });
+      if (!retry.ok) throw new ApiError('Unauthorized', retry.status);
+      return retry.json();
+    }
+    throw new ApiError('Session expired', 401);
+  }
+
+  if (!res.ok) {
+    const message = await res.text().catch(() => 'Request failed');
+    throw new ApiError(message, res.status);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export const api = {
+  get: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'GET' }),
+  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'POST', body: JSON.stringify(body) }),
+  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'PUT', body: JSON.stringify(body) }),
+  delete: <T>(path: string, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'DELETE' }),
+};
+</file>
+
+<file path="src/services/keychain.ts">
+import * as SecureStore from 'expo-secure-store';
+
+type TokenKey = 'access_token' | 'refresh_token';
+
+export async function saveToken(key: TokenKey, value: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch (error) {
+    console.error(`[keychain] Error saving ${key}:`, error);
+  }
+}
+
+export async function getToken(key: TokenKey): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch (error) {
+    console.error(`[keychain] Error getting ${key}:`, error);
+    return null;
+  }
+}
+
+export async function removeToken(key: TokenKey): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch (error) {
+    console.error(`[keychain] Error removing ${key}:`, error);
+  }
+}
+
+export async function clearAllTokens(): Promise<void> {
+  await removeToken('access_token');
+  await removeToken('refresh_token');
+}
+</file>
+
+<file path="src/services/storage.ts">
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export async function storageGet<T>(key: string): Promise<T | null> {
+  try {
+    const raw = await AsyncStorage.getItem(key);
+    if (raw === null) return null;
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    console.error(`[storage] Error getting ${key}:`, error);
+    return null;
+  }
+}
+
+export async function storageSet<T>(key: string, value: T): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`[storage] Error setting ${key}:`, error);
+  }
+}
+
+export async function storageRemove(key: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error(`[storage] Error removing ${key}:`, error);
+  }
+}
+
+export async function storageClear(): Promise<void> {
+  try {
+    await AsyncStorage.clear();
+  } catch (error) {
+    console.error('[storage] Error clearing storage:', error);
+  }
+}
+</file>
+
+<file path="src/stores/auth.store.ts">
+import { create } from 'zustand';
+
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+};
+
+type AuthState = {
+  user: User | null;
+  isAuthenticated: boolean;
+  isHydrated: boolean;
+  setUser: (user: User, ) => void;
+  logout: () => void;
+  setHydrated: () => void;
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isHydrated: false,
+  setUser: (user) => set({ user, isAuthenticated: true }),
+  logout: () => set({ user: null, isAuthenticated: false }),
+  setHydrated: () => set({ isHydrated: true }),
+}));
+</file>
+
+<file path="src/stores/ui.store.ts">
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+
+export type ToastType  = 'success' | 'error' | 'info';
+export type Toast      = { id: string; type: ToastType; message: string };
+export type ThemeMode  = 'dark' | 'light' | 'system';
+export type AppCategory = 'Pagos' | 'Inversiones' | 'Social' | 'Gestión' | 'Utilidades';
+
+export type CenterApp = {
+  id: string; label: string; icon: string; href: string;
+  color: string; colorTo: string; category: AppCategory; description: string;
+};
+
+export const AVAILABLE_APPS: CenterApp[] = [
+  { id: 'transfer', label: 'Transferir',   icon: '↑',  href: '/(app)/wallet',  color: '#0f2554', colorTo: '#1a3a7a', category: 'Pagos',       description: 'Enviá dinero a cualquier contacto' },
+  { id: 'pay',      label: 'Pagar',        icon: '$',  href: '/(app)/wallet',  color: '#00b5db', colorTo: '#007fa0', category: 'Pagos',       description: 'Pagá servicios, facturas y comercios' },
+  { id: 'qr',       label: 'QR Cobrar',    icon: '▦',  href: '/(app)/wallet',  color: '#059669', colorTo: '#047857', category: 'Pagos',       description: 'Generá un QR para cobrar' },
+  { id: 'request',  label: 'Solicitar',    icon: '↓',  href: '/(app)/wallet',  color: '#f2931b', colorTo: '#c46e0a', category: 'Pagos',       description: 'Pedile dinero a un contacto' },
+  { id: 'invest',   label: 'Invertir',     icon: '📈', href: '/(app)/wallet',  color: '#1d4ed8', colorTo: '#1e3a8a', category: 'Inversiones', description: 'Plazos fijos, FCI y más desde $100' },
+  { id: 'crypto',   label: 'Cripto',       icon: '₿',  href: '/(app)/wallet',  color: '#d97706', colorTo: '#92400e', category: 'Inversiones', description: 'Comprá y vendé criptomonedas' },
+  { id: 'savings',  label: 'Ahorro',       icon: '🏦', href: '/(app)/wallet',  color: '#0369a1', colorTo: '#075985', category: 'Inversiones', description: 'Cajas de ahorro con rendimiento diario' },
+  { id: 'reels',    label: 'Reels',        icon: '▶',  href: '/(app)/explore', color: '#db2777', colorTo: '#9d174d', category: 'Social',      description: 'Explorá contenido financiero en video' },
+  { id: 'contacts', label: 'Contactos',    icon: '👥', href: '/(app)/profile', color: '#7c3aed', colorTo: '#6d28d9', category: 'Social',      description: 'Tus contactos frecuentes' },
+  { id: 'refer',    label: 'Referidos',    icon: '🎁', href: '/(app)/profile', color: '#be185d', colorTo: '#9d174d', category: 'Social',      description: 'Invitá amigos y ganás beneficios' },
+  { id: 'ia',       label: 'Asistente IA', icon: '◈',  href: '/(app)/wallet',  color: '#00b5db', colorTo: '#007fa0', category: 'Gestión',     description: 'Consultá tus finanzas con IA' },
+  { id: 'history',  label: 'Historial',    icon: '☰',  href: '/(app)',         color: '#374151', colorTo: '#1f2937', category: 'Gestión',     description: 'Todos tus movimientos' },
+  { id: 'cards',    label: 'Tarjetas',     icon: '▬',  href: '/(app)/wallet',  color: '#0f2554', colorTo: '#080f2a', category: 'Gestión',     description: 'Administrá tus tarjetas de débito' },
+  { id: 'limits',   label: 'Límites',      icon: '⊘',  href: '/(app)/wallet',  color: '#991b1b', colorTo: '#7f1d1d', category: 'Gestión',     description: 'Configurá límites de transferencia' },
+  { id: 'profile',  label: 'Perfil',       icon: '◉',  href: '/(app)/profile', color: '#0f2554', colorTo: '#1a3a7a', category: 'Utilidades',  description: 'Tu cuenta y configuración' },
+  { id: 'security', label: 'Seguridad',    icon: '🛡',  href: '/(app)/profile', color: '#1e3a8a', colorTo: '#172554', category: 'Utilidades',  description: 'PIN, biometría y dispositivos' },
+  { id: 'notif',    label: 'Alertas',      icon: '🔔', href: '/(app)/profile', color: '#f2931b', colorTo: '#c46e0a', category: 'Utilidades',  description: 'Configurá tus notificaciones' },
+];
+
+export const ALL_CATEGORIES: AppCategory[] = ['Pagos', 'Inversiones', 'Social', 'Gestión', 'Utilidades'];
+
+const KEY_CENTER = 'center_app_v2';
+const KEY_THEME  = 'theme_mode';
+
+type UiState = {
+  isLoading:   boolean;
+  toasts:      Toast[];
+  centerApp:   CenterApp | null;
+  themeMode:   ThemeMode;
+  setLoading:     (v: boolean) => void;
+  addToast:       (type: ToastType, message: string) => void;
+  removeToast:    (id: string) => void;
+  setCenterApp:   (app: CenterApp | null) => Promise<void>;
+  loadCenterApp:  () => Promise<void>;
+  setThemeMode:   (mode: ThemeMode) => Promise<void>;
+  loadThemeMode:  () => Promise<void>;
+};
+
+export const useUiStore = create<UiState>((set) => ({
+  isLoading: false,
+  toasts:    [],
+  centerApp: null,
+  themeMode: 'dark',
+
+  setLoading: (isLoading) => set({ isLoading }),
+
+  addToast: (type, message) =>
+    set((s) => ({ toasts: [...s.toasts.slice(-2), { id: Date.now().toString(), type, message }] })),
+
+  removeToast: (id) =>
+    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+  setCenterApp: async (app) => {
+    set({ centerApp: app });
+    try { app ? await AsyncStorage.setItem(KEY_CENTER, JSON.stringify(app)) : await AsyncStorage.removeItem(KEY_CENTER); } catch {}
+  },
+
+  loadCenterApp: async () => {
+    try { const r = await AsyncStorage.getItem(KEY_CENTER); if (r) set({ centerApp: JSON.parse(r) }); } catch {}
+  },
+
+  setThemeMode: async (themeMode) => {
+    set({ themeMode });
+    try { await AsyncStorage.setItem(KEY_THEME, themeMode); } catch {}
+  },
+
+  loadThemeMode: async () => {
+    try { const r = await AsyncStorage.getItem(KEY_THEME); if (r) set({ themeMode: r as ThemeMode }); } catch {}
+  },
+}));
+
+export const toast = {
+  success: (m: string) => useUiStore.getState().addToast('success', m),
+  error:   (m: string) => useUiStore.getState().addToast('error', m),
+  info:    (m: string) => useUiStore.getState().addToast('info', m),
+};
+</file>
+
+<file path="tsconfig.json">
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@/assets/*": [
+        "./assets/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
+</file>
+
+<file path="app.json">
+{
+  "expo": {
+    "name": "sfvc",
+    "slug": "sfvc",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "sfvc",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.sfvc"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "android": {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 76
+          }
+        }
+      ],
+      "expo-secure-store",
+      "@sentry/react-native"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "sfvc",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "lint": "expo lint"
+  },
+  "dependencies": {
+    "@expo/ui": "~55.0.17",
+    "@gorhom/bottom-sheet": "^5.2.14",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/netinfo": "11.5.2",
+    "@react-navigation/bottom-tabs": "^7.15.5",
+    "@react-navigation/elements": "^2.9.10",
+    "@react-navigation/native": "^7.1.33",
+    "@sentry/react-native": "~7.11.0",
+    "@tanstack/react-query": "^5.100.11",
+    "expo": "~55.0.25",
+    "expo-constants": "~55.0.16",
+    "expo-device": "~55.0.17",
+    "expo-font": "~55.0.8",
+    "expo-glass-effect": "~55.0.11",
+    "expo-haptics": "~55.0.14",
+    "expo-image": "~55.0.10",
+    "expo-linear-gradient": "~55.0.14",
+    "expo-linking": "~55.0.15",
+    "expo-router": "~55.0.15",
+    "expo-secure-store": "~55.0.14",
+    "expo-splash-screen": "~55.0.21",
+    "expo-status-bar": "~55.0.6",
+    "expo-symbols": "~55.0.9",
+    "expo-system-ui": "~55.0.18",
+    "expo-updates": "~55.0.23",
+    "expo-web-browser": "~55.0.16",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.6",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-web": "~0.21.0",
+    "react-native-worklets": "0.7.4",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
+</file>
+
+<file path="src/app/_layout.tsx">
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Slot } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect } from 'react';
+import { useColorScheme } from 'react-native';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { useUiStore } from '@/stores/ui.store';
+import '@/hooks/use-network-status';
+
+SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 2, staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 30 } },
+});
+
+export default function RootLayout() {
+  const colorScheme    = useColorScheme();
+  const { loadThemeMode, loadCenterApp, themeMode } = useUiStore();
+
+  useEffect(() => {
+    Promise.all([loadThemeMode(), loadCenterApp()]).finally(() => {
+      SplashScreen.hideAsync();
+    });
+  }, []);
+
+  // Resuelve el tema para @react-navigation
+  const isDark =
+    themeMode === 'dark'  ? true  :
+    themeMode === 'light' ? false :
+    colorScheme === 'dark';
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+          <Slot />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
+</file>
+
+<file path="src/app/index.tsx">
+import { Redirect } from 'expo-router';
+
+export default function Root() {
+  return <Redirect href="/(app)" />;
+}
+</file>
+
+<file path="src/constants/theme.ts">
+import '@/global.css';
+import { Dimensions, Platform } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
+const SCREEN_H = Dimensions.get('window').height;
+
+// ── Brand tokens ─────────────────────────────────────────
+export const Brand = {
+  primary:   '#0f2554',   // azul marino
+  primaryLight: '#1a3a7a',
+  primaryDark:  '#080f2a',
+
+  secondary:   '#00b5db',  // cyan
+  secondaryLight: '#33c7e6',
+  secondaryDark:  '#007fa0',
+
+  tertiary:   '#f2931b',   // naranja
+  tertiaryLight: '#f5a94a',
+  tertiaryDark:  '#c46e0a',
+
+  // Transparencias útiles
+  primary10:  'rgba(15,37,84,0.10)',
+  primary20:  'rgba(15,37,84,0.20)',
+  primary40:  'rgba(15,37,84,0.40)',
+  secondary10: 'rgba(0,181,219,0.10)',
+  secondary20: 'rgba(0,181,219,0.20)',
+  secondary40: 'rgba(0,181,219,0.40)',
+  tertiary10:  'rgba(242,147,27,0.10)',
+  tertiary20:  'rgba(242,147,27,0.20)',
+} as const;
+
+// ── Glass DARK ───────────────────────────────────────────
+export const GlassDark = {
+  // Fondos
+  bgFrom: '#04091a',
+  bgMid:  '#0a1230',
+  bgTo:   '#071e3d',
+
+  // Cards
+  cardBg:           'rgba(255,255,255,0.06)',
+  cardBgElevated:   'rgba(255,255,255,0.10)',
+  cardBorder:       'rgba(255,255,255,0.10)',
+  cardBorderActive: 'rgba(0,181,219,0.45)',
+
+  // Texto
+  textPrimary:   '#ffffff',
+  textSecondary: 'rgba(255,255,255,0.55)',
+  textMuted:     'rgba(255,255,255,0.30)',
+
+  // Orbs
+  orb1: 'rgba(15,37,84,0.55)',
+  orb2: 'rgba(0,181,219,0.18)',
+  orb3: 'rgba(242,147,27,0.12)',
+
+  // Botón central
+  centerBtnFrom: Brand.secondary,
+  centerBtnTo:   Brand.secondaryDark,
+
+  // Estados
+  positive: '#34d399',
+  negative: '#fb7185',
+
+  // Navbar
+  navBg:     'rgba(4,9,26,0.90)',
+  navBorder: 'rgba(0,181,219,0.18)',
+
+  // Barras gráfico
+  barActive:   Brand.secondary,
+  barInactive: 'rgba(255,255,255,0.10)',
+
+  // Sheet / modal
+  sheetBg:    '#080f2a',
+  overlayBg:  'rgba(0,0,0,0.65)',
+
+  // Input
+  inputBg:     'rgba(255,255,255,0.07)',
+  inputBorder: 'rgba(255,255,255,0.12)',
+
+  // Acento principal para badges, selección activa
+  accent:     Brand.secondary,
+  accentSoft: Brand.secondary20,
+} as const;
+
+// ── Glass LIGHT ──────────────────────────────────────────
+export const GlassLight = {
+  // Fondos
+  bgFrom: '#eef2fb',
+  bgMid:  '#dce8f7',
+  bgTo:   '#cfe3f5',
+
+  // Cards
+  cardBg:           'rgba(255,255,255,0.75)',
+  cardBgElevated:   'rgba(255,255,255,0.92)',
+  cardBorder:       'rgba(15,37,84,0.10)',
+  cardBorderActive: 'rgba(0,181,219,0.55)',
+
+  // Texto
+  textPrimary:   Brand.primary,
+  textSecondary: 'rgba(15,37,84,0.60)',
+  textMuted:     'rgba(15,37,84,0.38)',
+
+  // Orbs
+  orb1: 'rgba(15,37,84,0.08)',
+  orb2: 'rgba(0,181,219,0.12)',
+  orb3: 'rgba(242,147,27,0.10)',
+
+  // Botón central
+  centerBtnFrom: Brand.secondary,
+  centerBtnTo:   Brand.secondaryDark,
+
+  // Estados
+  positive: '#059669',
+  negative: '#dc2626',
+
+  // Navbar
+  navBg:     'rgba(255,255,255,0.85)',
+  navBorder: 'rgba(15,37,84,0.12)',
+
+  // Barras gráfico
+  barActive:   Brand.secondary,
+  barInactive: 'rgba(15,37,84,0.12)',
+
+  // Sheet
+  sheetBg:   '#f0f5ff',
+  overlayBg: 'rgba(15,37,84,0.45)',
+
+  // Input
+  inputBg:     'rgba(15,37,84,0.06)',
+  inputBorder: 'rgba(15,37,84,0.14)',
+
+  // Acento
+  accent:     Brand.secondary,
+  accentSoft: Brand.secondary10,
+} as const;
+
+export type GlassTokens = typeof GlassDark;
+
+// Mantiene compatibilidad con código anterior que importa `Glass`
+export const Glass = GlassDark;
+
+// ── Colors (ThemedView / ThemedText) ─────────────────────
+export const Colors = {
+  light: {
+    text:               Brand.primary,
+    background:         '#f0f5ff',
+    backgroundElement:  '#dce8f7',
+    backgroundSelected: '#c8d9f0',
+    textSecondary:      'rgba(15,37,84,0.60)',
+  },
+  dark: {
+    text:               '#ffffff',
+    background:         '#04091a',
+    backgroundElement:  '#0d1633',
+    backgroundSelected: '#162044',
+    textSecondary:      'rgba(255,255,255,0.55)',
+  },
+} as const;
+
+export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+
+export const Fonts = Platform.select({
+  ios:     { sans: 'system-ui', serif: 'ui-serif', rounded: 'ui-rounded', mono: 'ui-monospace' },
+  default: { sans: 'normal',    serif: 'serif',    rounded: 'normal',     mono: 'monospace' },
+  web:     { sans: 'var(--font-display)', serif: 'var(--font-serif)', rounded: 'var(--font-rounded)', mono: 'var(--font-mono)' },
+});
+
+export const Spacing = {
+  half: 2, one: 4, two: 8, three: 16, four: 24, five: 32, six: 64,
+} as const;
+
+export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+
+export const SCREEN_WIDTH  = SCREEN_W;
+export const SCREEN_HEIGHT = SCREEN_H;
+export const NAV_HEIGHT    = 62;
+export const NAV_BOTTOM    = 10;
+export const NAV_SAFE_PAD  = NAV_HEIGHT + NAV_BOTTOM + 24;
+export const H_PAD         = 16;
+export const CARD_GAP      = 10;
+</file>
+
+</files>

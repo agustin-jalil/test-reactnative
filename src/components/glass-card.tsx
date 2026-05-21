@@ -1,14 +1,18 @@
 import { StyleSheet, View, type ViewProps } from 'react-native';
-import { Glass } from '@/constants/theme';
+import { useGlass } from '@/hooks/use-glass';
 
 type GlassCardProps = ViewProps & { active?: boolean };
 
 export function GlassCard({ style, active = false, children, ...props }: GlassCardProps) {
+  const G = useGlass();
   return (
     <View
       style={[
         styles.card,
-        { borderColor: active ? Glass.cardBorderActive : Glass.cardBorder },
+        {
+          backgroundColor: G.cardBg,
+          borderColor: active ? G.cardBorderActive : G.cardBorder,
+        },
         style,
       ]}
       {...props}>
@@ -18,10 +22,5 @@ export function GlassCard({ style, active = false, children, ...props }: GlassCa
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Glass.cardBg,
-    borderWidth: 0.5,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
+  card: { borderWidth: 0.5, borderRadius: 20, overflow: 'hidden' },
 });
